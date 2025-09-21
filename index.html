@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GranTES - Smart Subsidy Management System</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-graduation-cap"></i>
+                <span>GranTES</span>
+            </div>
+            <div class="nav-menu">
+                <a href="#" class="nav-link" onclick="showHome()">Home</a>
+                <a href="#" class="nav-link" onclick="showLogin()">Login</a>
+                <a href="#" class="nav-link" onclick="showRegister()">Register</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <div class="main-container">
+        <!-- Home Section -->
+        <section id="home" class="section active">
+            <div class="hero">
+                <div class="hero-content">
+                    <h1>Smart Subsidy Management System</h1>
+                    <p>Streamline your educational subsidy applications with our comprehensive management platform</p>
+                    <div class="hero-buttons">
+                        <button class="btn btn-primary" onclick="showRegister()">Get Started</button>
+                        <button class="btn btn-secondary" onclick="showLogin()">Login</button>
+                    </div>
+                </div>
+                <div class="hero-image">
+                    <i class="fas fa-university"></i>
+                </div>
+            </div>
+            
+            <div class="features">
+                <div class="feature-card">
+                    <i class="fas fa-user-graduate"></i>
+                    <h3>For Students</h3>
+                    <p>Submit applications, track status, and manage your subsidy requirements</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-user-shield"></i>
+                    <h3>For Admins</h3>
+                    <p>Review applications, manage student records, and generate reports</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-chart-line"></i>
+                    <h3>Analytics</h3>
+                    <p>Comprehensive reporting and tracking of subsidy distribution</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Login Section -->
+        <section id="login" class="section">
+            <div class="auth-container">
+                <div class="auth-header">
+                    <h2>Login</h2>
+                    <p>Access your account</p>
+                </div>
+                <form class="auth-form" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="loginRole">Login as:</label>
+                        <select id="loginRole" required>
+                            <option value="">Select Role</option>
+                            <option value="student">Student</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginEmail">Email:</label>
+                        <input type="email" id="loginEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Password:</label>
+                        <input type="password" id="loginPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Login</button>
+                    <p class="auth-switch">Don't have an account? <a href="#" onclick="showRegister()">Register here</a></p>
+                </form>
+            </div>
+        </section>
+
+        <!-- Registration Section -->
+        <section id="register" class="section">
+            <div class="auth-container">
+                <div class="auth-header">
+                    <h2>Student Registration</h2>
+                    <p>Create your account to apply for subsidies</p>
+                </div>
+                <form class="auth-form" onsubmit="handleRegister(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firstName">First Name:</label>
+                            <input type="text" id="firstName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="lastName">Last Name:</label>
+                            <input type="text" id="lastName" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="studentId">Student ID:</label>
+                        <input type="text" id="studentId" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerEmail">Email:</label>
+                        <input type="email" id="registerEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">Password:</label>
+                        <input type="password" id="registerPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password:</label>
+                        <input type="password" id="confirmPassword" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="course">Course:</label>
+                            <input type="text" id="course" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="year">Year Level:</label>
+                            <select id="year" required>
+                                <option value="">Select Year</option>
+                                <option value="1st">1st Year</option>
+                                <option value="2nd">2nd Year</option>
+                                <option value="3rd">3rd Year</option>
+                                <option value="4th">4th Year</option>
+                                <option value="5th">5th Year</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Register</button>
+                    <p class="auth-switch">Already have an account? <a href="#" onclick="showLogin()">Login here</a></p>
+                </form>
+            </div>
+        </section>
+
+        <!-- Student Dashboard -->
+        <section id="student-dashboard" class="section">
+            <div class="dashboard-header">
+                <h2>Student Dashboard</h2>
+                <div class="user-info">
+                    <span id="studentName"></span>
+                    <button class="btn btn-secondary" onclick="logout()">Logout</button>
+                </div>
+            </div>
+            
+            <div class="dashboard-content">
+                <div class="dashboard-stats">
+                    <div class="stat-card">
+                        <i class="fas fa-file-alt"></i>
+                        <h3>Application Status</h3>
+                        <p id="applicationStatus">Pending</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-bell"></i>
+                        <h3>Notifications</h3>
+                        <p id="notificationCount">0</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-tabs">
+                    <button class="tab-btn active" onclick="showStudentTab('application')">Application</button>
+                    <button class="tab-btn" onclick="showStudentTab('profile')">Profile</button>
+                    <button class="tab-btn" onclick="showStudentTab('notifications')">Notifications</button>
+                </div>
+
+                <div class="tab-content">
+                    <!-- Application Tab -->
+                    <div id="application-tab" class="tab-panel active">
+                        <div class="application-form">
+                            <h3>Submit Requirements</h3>
+                            <form onsubmit="submitApplication(event)">
+                                <div class="form-group">
+                                    <label for="documentType">Document Type:</label>
+                                    <select id="documentType" required>
+                                        <option value="">Select Document</option>
+                                        <option value="id">Student ID</option>
+                                        <option value="cor">Certificate of Registration</option>
+                                        <option value="other">Other Valid Proof</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="fileUpload">Upload Document:</label>
+                                    <input type="file" id="fileUpload" accept=".pdf,.jpg,.jpeg,.png" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="applicationNotes">Additional Notes:</label>
+                                    <textarea id="applicationNotes" rows="4" placeholder="Any additional information..."></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Submit Application</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Profile Tab -->
+                    <div id="profile-tab" class="tab-panel">
+                        <div class="profile-info">
+                            <h3>Profile Information</h3>
+                            <div class="profile-details">
+                                <p><strong>Name:</strong> <span id="profileName"></span></p>
+                                <p><strong>Student ID:</strong> <span id="profileStudentId"></span></p>
+                                <p><strong>Email:</strong> <span id="profileEmail"></span></p>
+                                <p><strong>Course:</strong> <span id="profileCourse"></span></p>
+                                <p><strong>Year Level:</strong> <span id="profileYear"></span></p>
+                                <p><strong>Application Status:</strong> <span id="profileStatus"></span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notifications Tab -->
+                    <div id="notifications-tab" class="tab-panel">
+                        <div class="notifications-list">
+                            <h3>Notifications</h3>
+                            <div id="notificationsContainer">
+                                <p class="no-notifications">No notifications yet.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Admin Dashboard -->
+        <section id="admin-dashboard" class="section">
+            <div class="dashboard-header">
+                <h2>Admin Dashboard</h2>
+                <div class="user-info">
+                    <span>Administrator</span>
+                    <button class="btn btn-secondary" onclick="logout()">Logout</button>
+                </div>
+            </div>
+
+            <div class="dashboard-content">
+                <div class="dashboard-stats">
+                    <div class="stat-card">
+                        <i class="fas fa-users"></i>
+                        <h3>Total Students</h3>
+                        <p id="totalStudents">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-check-circle"></i>
+                        <h3>Approved</h3>
+                        <p id="totalApproved">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-clock"></i>
+                        <h3>Pending</h3>
+                        <p id="totalPending">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-archive"></i>
+                        <h3>Archived</h3>
+                        <p id="totalArchived">0</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-tabs">
+                    <button class="tab-btn active" onclick="showAdminTab('applications')">Applications</button>
+                    <button class="tab-btn" onclick="showAdminTab('students')">Students</button>
+                    <button class="tab-btn" onclick="showAdminTab('reports')">Reports</button>
+                    <button class="tab-btn" onclick="showAdminTab('settings')">Settings</button>
+                </div>
+
+                <div class="tab-content">
+                    <!-- Applications Tab -->
+                    <div id="applications-tab" class="tab-panel active">
+                        <div class="applications-list">
+                            <h3>Student Applications</h3>
+                            <div class="filter-bar">
+                                <select id="statusFilter" onchange="filterApplications()">
+                                    <option value="">All Status</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="approved">Approved</option>
+                                    <option value="rejected">Rejected</option>
+                                </select>
+                                <input type="text" id="searchStudents" placeholder="Search students..." onkeyup="searchApplications()">
+                            </div>
+                            <div id="applicationsContainer">
+                                <p class="no-data">No applications found.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Students Tab -->
+                    <div id="students-tab" class="tab-panel">
+                        <div class="students-list">
+                            <h3>Student Records</h3>
+                            <div class="filter-bar">
+                                <select id="studentStatusFilter" onchange="filterStudents()">
+                                    <option value="">All Students</option>
+                                    <option value="active">Active</option>
+                                    <option value="archived">Archived</option>
+                                </select>
+                                <input type="text" id="searchStudentRecords" placeholder="Search students..." onkeyup="searchStudents()">
+                            </div>
+                            <div id="studentsContainer">
+                                <p class="no-data">No students found.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reports Tab -->
+                    <div id="reports-tab" class="tab-panel">
+                        <div class="reports-section">
+                            <h3>Reports & Analytics</h3>
+                            <div class="report-cards">
+                                <div class="report-card">
+                                    <h4>Application Summary</h4>
+                                    <canvas id="applicationChart" width="400" height="200"></canvas>
+                                </div>
+                                <div class="report-card">
+                                    <h4>Monthly Trends</h4>
+                                    <canvas id="trendChart" width="400" height="200"></canvas>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" onclick="generateReport()">Generate Report</button>
+                        </div>
+                    </div>
+
+                    <!-- Settings Tab -->
+                    <div id="settings-tab" class="tab-panel">
+                        <div class="settings-section">
+                            <h3>System Settings</h3>
+                            <div class="settings-form">
+                                <div class="form-group">
+                                    <label for="subsidyTypes">Subsidy Types:</label>
+                                    <textarea id="subsidyTypes" rows="3" placeholder="Enter subsidy types (one per line)"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="systemMessage">System Message:</label>
+                                    <textarea id="systemMessage" rows="3" placeholder="Global message for all users"></textarea>
+                                </div>
+                                <button class="btn btn-primary" onclick="updateSettings()">Update Settings</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Modal for Application Review -->
+    <div id="reviewModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Review Application</h3>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="applicationDetails"></div>
+                <div class="modal-actions">
+                    <button class="btn btn-success" onclick="updateApplicationStatus('approved')">Approve</button>
+                    <button class="btn btn-danger" onclick="updateApplicationStatus('rejected')">Reject</button>
+                    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="notificationToast" class="toast">
+        <div class="toast-content">
+            <i class="fas fa-info-circle"></i>
+            <span id="toastMessage"></span>
+        </div>
+    </div>
+
+    <!-- Chat Box -->
+    <div id="chatBox" class="chat-box">
+        <div class="chat-header">
+            <div class="chat-user-info">
+                <div class="chat-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="chat-user-details">
+                    <h4 id="chatUserName">Admin Support</h4>
+                    <span id="chatUserStatus" class="chat-status">Online</span>
+                </div>
+            </div>
+            <div class="chat-controls">
+                <button class="chat-btn" onclick="toggleChatMinimize()" title="Minimize">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <button class="chat-btn" onclick="closeChat()" title="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="chat-welcome">
+                <div class="welcome-message">
+                    <i class="fas fa-comments"></i>
+                    <h4>Welcome to Support Chat</h4>
+                    <p>Start a conversation with our support team</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chat-input-container">
+            <div class="chat-input-wrapper">
+                <input type="text" id="chatInput" placeholder="Type your message..." onkeypress="handleChatKeyPress(event)">
+                <button class="chat-send-btn" onclick="sendChatMessage()">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Toggle Button -->
+    <button id="chatToggle" class="chat-toggle" onclick="toggleChat()">
+        <i class="fas fa-comments"></i>
+        <span class="chat-badge" id="chatBadge">0</span>
+    </button>
+
+    <script src="script.js"></script>
+</body>
+</html>
