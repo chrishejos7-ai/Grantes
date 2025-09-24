@@ -137,7 +137,7 @@
                                 <option value="2nd">2nd Year</option>
                                 <option value="3rd">3rd Year</option>
                                 <option value="4th">4th Year</option>
-                                <option value="5th">5th Year</option>
+                                
                             </select>
                         </div>
                     </div>
@@ -184,17 +184,16 @@
                             <h3>Submit Requirements</h3>
                             <form onsubmit="submitApplication(event)">
                                 <div class="form-group">
-                                    <label for="documentType">Document Type:</label>
-                                    <select id="documentType" required>
-                                        <option value="">Select Document</option>
-                                        <option value="id">Student ID</option>
-                                        <option value="cor">Certificate of Registration</option>
-                                        <option value="other">Other Valid Proof</option>
-                                    </select>
+                                    <label for="idPictureUpload">Upload ID Picture:</label>
+                                    <input type="file" id="idPictureUpload" accept=".jpg,.jpeg,.png" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="fileUpload">Upload Document:</label>
-                                    <input type="file" id="fileUpload" accept=".pdf,.jpg,.jpeg,.png" required>
+                                    <label for="idNumber">ID Number:</label>
+                                    <input type="text" id="idNumber" placeholder="Enter ID number">
+                                </div>
+                                <div class="form-group">
+                                    <label for="corUpload">Upload COR:</label>
+                                    <input type="file" id="corUpload" accept=".pdf,.jpg,.jpeg,.png" required>
                                 </div>
                                 <div class="form-group">
                                     <label for="applicationNotes">Additional Notes:</label>
@@ -207,15 +206,80 @@
 
                     <!-- Profile Tab -->
                     <div id="profile-tab" class="tab-panel">
-                        <div class="profile-info">
-                            <h3>Profile Information</h3>
-                            <div class="profile-details">
-                                <p><strong>Name:</strong> <span id="profileName"></span></p>
-                                <p><strong>Student ID:</strong> <span id="profileStudentId"></span></p>
-                                <p><strong>Email:</strong> <span id="profileEmail"></span></p>
-                                <p><strong>Course:</strong> <span id="profileCourse"></span></p>
-                                <p><strong>Year Level:</strong> <span id="profileYear"></span></p>
-                                <p><strong>Application Status:</strong> <span id="profileStatus"></span></p>
+                        <div class="profile-card">
+                            <div class="profile-card-header">
+                                <div class="profile-avatar">
+                                    <i class="fas fa-user-graduate"></i>
+                                </div>
+                                <div class="profile-header-text">
+                                    <h3 id="profileName"></h3>
+                                    <div class="profile-meta">
+                                        <span id="profileEmail"></span>
+                                        <span class="dot">•</span>
+                                        <span id="profileStudentId"></span>
+                                    </div>
+                                </div>
+                                <span class="status-badge" id="profileStatus"></span>
+                            </div>
+
+                            <div class="profile-info-grid">
+                                <div class="profile-tile">
+                                    <div class="tile-icon"><i class="fas fa-book"></i></div>
+                                    <div class="tile-content">
+                                        <div class="tile-label">Course</div>
+                                        <div class="tile-value" id="profileCourse"></div>
+                                    </div>
+                                </div>
+                                <div class="profile-tile">
+                                    <div class="tile-icon"><i class="fas fa-layer-group"></i></div>
+                                    <div class="tile-content">
+                                        <div class="tile-label">Year Level</div>
+                                        <div class="tile-value" id="profileYear"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Messenger-style Profile Chat -->
+                        <div class="profile-chat-container" style="margin-top: 1.5rem;">
+                            <div class="profile-chat-header">
+                                <div style="display:flex; align-items:center; gap:0.75rem;">
+                                    <div class="profile-avatar" style="width:36px; height:36px;">
+                                        <i class="fas fa-user-shield" style="font-size:1rem;"></i>
+                                    </div>
+                                    <div>
+                                        <div style="font-weight:600; line-height:1;">Admin Support</div>
+                                        <div style="font-size:0.8rem; opacity:0.9; display:flex; align-items:center; gap:0.35rem;">
+                                            <span style="display:inline-block; width:8px; height:8px; background:#22c55e; border-radius:50%;"></span> Online
+                                        </div>
+                                    </div>
+                                </div>
+                                <button class="btn btn-secondary btn-sm" onclick="toggleProfileChat()" title="Expand/Compress">
+                                    <i class="fas fa-expand-arrows-alt"></i>
+                                </button>
+                            </div>
+
+                            <div class="profile-chat-messages" id="profileChatMessages">
+                                <div class="chat-welcome">
+                                    <div class="welcome-message">
+                                        <i class="fas fa-comments"></i>
+                                        <h5>Start chatting with Admin</h5>
+                                        <p>This is a direct message between you and admin.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="profile-chat-input-container">
+                                <div class="profile-chat-input-wrapper">
+                                    <button type="button" class="profile-chat-attach-btn" onclick="triggerProfileChatFile()" title="Attach">
+                                        <i class="fas fa-paperclip"></i>
+                                    </button>
+                                    <input type="file" id="profileChatFile" style="display:none" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx">
+                                    <input type="text" id="profileChatInput" placeholder="Write a message..." onkeypress="handleProfileChatKeyPress(event)">
+                                    <button class="profile-chat-send-btn" onclick="sendProfileChatMessage()" title="Send">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -354,7 +418,7 @@
 
     <!-- Modal for Application Review -->
     <div id="reviewModal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content review-modal">
             <div class="modal-header">
                 <h3>Review Application</h3>
                 <span class="close" onclick="closeModal()">&times;</span>
@@ -370,6 +434,88 @@
         </div>
     </div>
 
+    <!-- Admin: Student Profile Modal -->
+    <div id="studentProfileModal" class="modal">
+        <div class="modal-content admin-student-modal">
+            <div class="modal-header">
+                <h3>Student Profile</h3>
+                <span class="close" onclick="closeStudentProfileModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="admin-student-profile">
+                    <div class="admin-student-left">
+                        <div class="admin-student-photo">
+                            <img id="adminStudentPhoto" alt="Student ID Picture">
+                        </div>
+                        <div class="admin-student-photo-note">ID Picture preview</div>
+                    </div>
+                    <div class="admin-student-right">
+                        <div class="admin-student-name" id="adminStudentName"></div>
+                        <div class="admin-student-meta">
+                            <span id="adminStudentEmail"></span>
+                            <span class="dot">•</span>
+                            <span id="adminStudentId"></span>
+                        </div>
+                        <div class="admin-student-grid">
+                            <div class="admin-student-tile">
+                                <div class="label">Course</div>
+                                <div class="value" id="adminStudentCourse"></div>
+                            </div>
+                            <div class="admin-student-tile">
+                                <div class="label">Year Level</div>
+                                <div class="value" id="adminStudentYear"></div>
+                            </div>
+                            <div class="admin-student-tile">
+                                <div class="label">Status</div>
+                                <div class="value" id="adminStudentStatus"></div>
+                            </div>
+                            <div class="admin-student-tile">
+                                <div class="label">Application Status</div>
+                                <div class="value" id="adminStudentAppStatus"></div>
+                            </div>
+                            <div class="admin-student-tile">
+                                <div class="label">Registered</div>
+                                <div class="value" id="adminStudentRegistered"></div>
+                            </div>
+                        </div>
+
+                        <!-- Admin-Student Messenger Chat -->
+                        <div class="profile-chat-container" style="margin-top: 1rem;">
+                            <div class="profile-chat-header">
+                                <div style="display:flex; align-items:center; gap:0.75rem;">
+                                    <div class="profile-avatar" style="width:36px; height:36px;">
+                                        <i class="fas fa-user-graduate" style="font-size:1rem;"></i>
+                                    </div>
+                                    <div>
+                                        <div style="font-weight:600; line-height:1;">Chat with Student</div>
+                                        <div style="font-size:0.8rem; opacity:0.9;">Direct message thread</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="profile-chat-messages" id="adminStudentChatMessages">
+                                <div class="chat-welcome">
+                                    <div class="welcome-message">
+                                        <i class="fas fa-comments"></i>
+                                        <h5>Start chatting</h5>
+                                        <p>Your messages will appear here.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="profile-chat-input-container">
+                                <div class="profile-chat-input-wrapper">
+                                    <input type="text" id="adminStudentChatInput" placeholder="Write a message..." onkeypress="adminHandleChatKeyPress(event)">
+                                    <button class="profile-chat-send-btn" onclick="adminSendChatMessage()" title="Send">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Notification Toast -->
     <div id="notificationToast" class="toast">
         <div class="toast-content">
@@ -378,53 +524,7 @@
         </div>
     </div>
 
-    <!-- Chat Box -->
-    <div id="chatBox" class="chat-box">
-        <div class="chat-header">
-            <div class="chat-user-info">
-                <div class="chat-avatar">
-                    <i class="fas fa-user"></i>
-                </div>
-                <div class="chat-user-details">
-                    <h4 id="chatUserName">Admin Support</h4>
-                    <span id="chatUserStatus" class="chat-status">Online</span>
-                </div>
-            </div>
-            <div class="chat-controls">
-                <button class="chat-btn" onclick="toggleChatMinimize()" title="Minimize">
-                    <i class="fas fa-minus"></i>
-                </button>
-                <button class="chat-btn" onclick="closeChat()" title="Close">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        </div>
-        
-        <div class="chat-messages" id="chatMessages">
-            <div class="chat-welcome">
-                <div class="welcome-message">
-                    <i class="fas fa-comments"></i>
-                    <h4>Welcome to Support Chat</h4>
-                    <p>Start a conversation with our support team</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="chat-input-container">
-            <div class="chat-input-wrapper">
-                <input type="text" id="chatInput" placeholder="Type your message..." onkeypress="handleChatKeyPress(event)">
-                <button class="chat-send-btn" onclick="sendChatMessage()">
-                    <i class="fas fa-paper-plane"></i>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Chat Toggle Button -->
-    <button id="chatToggle" class="chat-toggle" onclick="toggleChat()">
-        <i class="fas fa-comments"></i>
-        <span class="chat-badge" id="chatBadge">0</span>
-    </button>
+    
 
     <script src="script.js"></script>
 </body>
