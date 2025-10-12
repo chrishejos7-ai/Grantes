@@ -4,6 +4,7 @@ let students = [];
 let applications = [];
 let notifications = [];
 let currentApplicationId = null;
+let adminPosts = [];
 
 // Chat Variables
 let chatMessages = [];
@@ -92,8 +93,8 @@ function showDashboard() {
         document.getElementById('admin-dashboard').classList.add('active');
         loadAdminDashboard();
     } else {
-        document.getElementById('student-dashboard').classList.add('active');
-        loadStudentDashboard();
+        document.getElementById('student-homepage').classList.add('active');
+        loadStudentHomepage();
     }
     updateNavigation();
 }
@@ -212,12 +213,27 @@ function handleLogin(event) {
             showToast('Invalid admin credentials', 'error');
         }
     } else if (role === 'student') {
-        // Student login
-        const student = students.find(s => {
+        // Student login - check both email and award number
+        const awardNumber = document.getElementById('loginAwardNumber').value.trim();
+        
+        // Load students from localStorage (including admin-created ones)
+        const allStudents = JSON.parse(localStorage.getItem('students') || '[]');
+        const combinedStudents = [...students, ...allStudents];
+        
+        const student = combinedStudents.find(s => {
             const sEmail = (s.email || '').trim().toLowerCase();
+            const sAwardNumber = (s.awardNumber || '').trim();
             const sPass = (s.password || '').trim();
-            return sEmail === email && sPass === password;
+            
+            // Check if login is by email or award number
+            if (email && sEmail === email) {
+                return sPass === password;
+            } else if (awardNumber && sAwardNumber === awardNumber) {
+                return sPass === password;
+            }
+            return false;
         });
+        
         if (student) {
             currentUser = {
                 id: student.id,
@@ -230,7 +246,7 @@ function handleLogin(event) {
             showToast('Login successful!', 'success');
             showDashboard();
         } else {
-            showToast('Invalid credentials', 'error');
+            showToast('Invalid credentials. Please check your award number/email and password.', 'error');
         }
     } else {
         showToast('Please select a role and try again', 'error');
@@ -244,31 +260,35 @@ function logout() {
     showHome();
 }
 
-// Student Dashboard Functions
-function loadStudentDashboard() {
+// Student Homepage Functions
+function loadStudentHomepage() {
     const student = currentUser.studentData;
     
-    // Update dashboard header
+    // Update header
     document.getElementById('studentName').textContent = student.firstName + ' ' + student.lastName;
-    
-    // Update stats
-    document.getElementById('applicationStatus').textContent = 
-        student.applicationStatus === 'none' ? 'Not Submitted' : 
-        student.applicationStatus.charAt(0).toUpperCase() + student.applicationStatus.slice(1);
     
     // Update notification count
     const studentNotifications = notifications.filter(n => n.studentId === student.id);
-    document.getElementById('notificationCount').textContent = studentNotifications.length;
+    document.getElementById('studentNotificationCount').textContent = studentNotifications.length;
+    
+    // Update message count
+    const studentMessages = JSON.parse(localStorage.getItem('studentMessages') || '[]');
+    const unreadMessages = studentMessages.filter(m => m.studentId === student.id && m.sender === 'admin' && !m.read);
+    document.getElementById('studentMessageCount').textContent = unreadMessages.length;
     
     // Load profile information
     loadStudentProfile();
     
-    // Load notifications
-    loadStudentNotifications();
+    // Load announcements
+    loadStudentAnnouncements();
+    
+    // Load messages
+    loadStudentMessages();
     
     // Initialize chat
     initializeChat();
 }
+
 
 function loadStudentProfile() {
     const student = currentUser.studentData;
@@ -278,9 +298,100 @@ function loadStudentProfile() {
     document.getElementById('profileEmail').textContent = student.email;
     document.getElementById('profileCourse').textContent = student.course;
     document.getElementById('profileYear').textContent = student.year;
+    document.getElementById('profileAwardNumber').textContent = student.awardNumber || 'Not assigned';
     document.getElementById('profileStatus').textContent = 
         student.applicationStatus === 'none' ? 'Not Submitted' : 
         student.applicationStatus.charAt(0).toUpperCase() + student.applicationStatus.slice(1);
+}
+
+function loadStudentAnnouncements() {
+    const adminPosts = JSON.parse(localStorage.getItem('adminPosts') || '[]');
+    const container = document.getElementById('studentAnnouncementsFeed');
+    
+    if (adminPosts.length === 0) {
+        container.innerHTML = `
+            <div class="no-posts">
+                <i class="fas fa-newspaper"></i>
+                <h4>No announcements yet</h4>
+                <p>The administration hasn't posted any announcements yet.</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = adminPosts.map(post => {
+        const comments = JSON.parse(localStorage.getItem('studentComments') || '[]');
+        const postComments = comments.filter(comment => comment.postId === post.id);
+        
+        return `
+            <div class="post-card">
+                <div class="post-header">
+                    <div class="post-author-avatar">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <div class="post-author-info">
+                        <h4>${post.author}</h4>
+                        <p>${formatDate(post.timestamp)}</p>
+                    </div>
+                </div>
+                <div class="post-content">
+                    <div class="post-text">${post.content}</div>
+                </div>
+                <div class="post-actions">
+                    <button class="post-action-btn ${post.liked ? 'liked' : ''}" onclick="togglePostLike(${post.id})">
+                        <i class="fas fa-heart"></i>
+                        <span>${post.likes}</span>
+                    </button>
+                    <button class="post-action-btn" onclick="toggleComments(${post.id})">
+                        <i class="fas fa-comment"></i>
+                        <span>${postComments.length}</span>
+                    </button>
+                </div>
+                <div class="comments-section" id="comments-${post.id}" style="display: none;">
+                    <div class="comment-form">
+                        <input type="text" class="comment-input" placeholder="Write a comment..." id="commentInput-${post.id}">
+                        <button class="comment-btn" onclick="addComment(${post.id})">Comment</button>
+                    </div>
+                    <div class="comments-list" id="commentsList-${post.id}">
+                        ${renderComments(postComments)}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function loadStudentMessages() {
+    const studentMessages = JSON.parse(localStorage.getItem('studentMessages') || '[]');
+    const student = currentUser.studentData;
+    const studentThread = studentMessages.filter(m => m.studentId === student.id);
+    const container = document.getElementById('studentChatMessages');
+    
+    if (studentThread.length === 0) {
+        container.innerHTML = `
+            <div class="no-messages">
+                <i class="fas fa-comments"></i>
+                <h4>No messages yet</h4>
+                <p>Start a conversation with the administration team.</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = studentThread.map(message => `
+        <div class="message-item ${message.sender === 'student' ? 'sent' : 'received'}">
+            <div class="message-avatar">
+                ${message.sender === 'student' ? 'S' : 'A'}
+            </div>
+            <div class="message-bubble">
+                <div class="message-text">${message.text}</div>
+                <div class="message-time">${formatTime(message.timestamp)}</div>
+            </div>
+        </div>
+    `).join('');
+
+    // Scroll to bottom
+    container.scrollTop = container.scrollHeight;
 }
 
 function loadStudentNotifications() {
@@ -407,14 +518,27 @@ function showStudentTab(tabName) {
 
 // Admin Dashboard Functions
 function loadAdminDashboard() {
+    // Load students from localStorage (including admin-created ones)
+    const allStudents = JSON.parse(localStorage.getItem('students') || '[]');
+    const combinedStudents = [...students, ...allStudents];
+    
     // Update stats
-    document.getElementById('totalStudents').textContent = students.length;
+    document.getElementById('totalStudents').textContent = combinedStudents.length;
     document.getElementById('totalApproved').textContent = 
-        students.filter(s => s.applicationStatus === 'approved').length;
+        combinedStudents.filter(s => s.applicationStatus === 'approved').length;
     document.getElementById('totalPending').textContent = 
-        students.filter(s => s.applicationStatus === 'pending').length;
+        combinedStudents.filter(s => s.applicationStatus === 'pending').length;
     document.getElementById('totalArchived').textContent = 
-        students.filter(s => s.status === 'archived').length;
+        combinedStudents.filter(s => s.status === 'archived').length;
+    
+    // Show admin homepage by default
+    const adminHomepage = document.getElementById('admin-homepage');
+    const tabContent = document.querySelector('.tab-content');
+    adminHomepage.style.display = 'block';
+    tabContent.style.display = 'none';
+    
+    // Load admin posts
+    loadAdminPosts();
     
     // Load applications
     loadApplications();
@@ -497,6 +621,12 @@ function loadStudents() {
                         <span class="info-label">Email</span>
                         <span class="info-value">${student.email}</span>
                     </div>
+                    ${student.awardNumber ? `
+                    <div class="info-item">
+                        <span class="info-label">Award Number</span>
+                        <span class="info-value">${student.awardNumber}</span>
+                    </div>
+                    ` : ''}
                     <div class="info-item">
                         <span class="info-label">Course</span>
                         <span class="info-value">${student.course}</span>
@@ -529,13 +659,25 @@ function loadStudents() {
 
 // Admin Tab Functions
 function showAdminTab(tabName) {
-    // Update tab buttons
-    document.querySelectorAll('#admin-dashboard .tab-btn').forEach(btn => btn.classList.remove('active'));
+    // Update bottom navigation tab buttons
+    document.querySelectorAll('.nav-tab-btn').forEach(btn => btn.classList.remove('active'));
     event.target.classList.add('active');
     
-    // Update tab panels
-    document.querySelectorAll('#admin-dashboard .tab-panel').forEach(panel => panel.classList.remove('active'));
-    document.getElementById(`${tabName}-tab`).classList.add('active');
+    // Hide admin homepage and show tab content
+    const adminHomepage = document.getElementById('admin-homepage');
+    const tabContent = document.querySelector('.tab-content');
+    
+    if (tabName === 'homepage') {
+        adminHomepage.style.display = 'block';
+        tabContent.style.display = 'none';
+    } else {
+        adminHomepage.style.display = 'none';
+        tabContent.style.display = 'block';
+        
+        // Update tab panels
+        document.querySelectorAll('#admin-dashboard .tab-panel').forEach(panel => panel.classList.remove('active'));
+        document.getElementById(`${tabName}-tab`).classList.add('active');
+    }
     
     // Load tab-specific content
     if (tabName === 'reports') {
@@ -851,7 +993,11 @@ function filterStudentsByStatus() {
     const statusFilter = document.getElementById('studentStatusFilter').value;
     const searchTerm = document.getElementById('searchStudentRecords').value.toLowerCase();
     
-    let filtered = students;
+    // Load students from localStorage (including admin-created ones)
+    const allStudents = JSON.parse(localStorage.getItem('students') || '[]');
+    const combinedStudents = [...students, ...allStudents];
+    
+    let filtered = combinedStudents;
     
     if (statusFilter) {
         filtered = filtered.filter(student => student.status === statusFilter);
@@ -1352,4 +1498,301 @@ function hideProfileTypingIndicator() {
 function scrollProfileChatToBottom() {
     const container = document.getElementById('profileChatMessages');
     container.scrollTop = container.scrollHeight;
+}
+
+// Admin Posting Functions
+function createPost(type) {
+    const postInput = document.getElementById('postInput');
+    const content = postInput.value.trim();
+    
+    if (!content && type !== 'feeling') {
+        showToast('Please enter some content for your post', 'error');
+        return;
+    }
+    
+    const post = {
+        id: Date.now(),
+        author: 'Administrator',
+        content: content || `Created a ${type} post`,
+        type: type,
+        timestamp: new Date().toISOString(),
+        likes: 0,
+        comments: 0,
+        shares: 0,
+        liked: false
+    };
+    
+    adminPosts.unshift(post);
+    postInput.value = '';
+    loadAdminPosts();
+    showToast('Post created successfully!', 'success');
+}
+
+function loadAdminPosts() {
+    const postsFeed = document.getElementById('postsFeed');
+    
+    if (adminPosts.length === 0) {
+        postsFeed.innerHTML = `
+            <div class="welcome-message">
+                <h3>Welcome to the Admin Dashboard</h3>
+                <p>Manage student applications, view reports, and configure system settings from this central location.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    const postsHTML = adminPosts.map(post => `
+        <div class="post-item">
+            <div class="post-header">
+                <div class="post-author-pic">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <div class="post-author-info">
+                    <h4>${post.author}</h4>
+                    <p>${formatDate(post.timestamp)}</p>
+                </div>
+            </div>
+            <div class="post-content">
+                ${post.content}
+            </div>
+            <div class="post-actions-bar">
+                <button class="post-action-bar-btn ${post.liked ? 'liked' : ''}" onclick="toggleLike(${post.id})">
+                    <i class="fas fa-heart"></i>
+                    <span>${post.likes}</span>
+                </button>
+                <button class="post-action-bar-btn" onclick="commentPost(${post.id})">
+                    <i class="fas fa-comment"></i>
+                    <span>${post.comments}</span>
+                </button>
+                <button class="post-action-bar-btn" onclick="sharePost(${post.id})">
+                    <i class="fas fa-share"></i>
+                    <span>${post.shares}</span>
+                </button>
+            </div>
+        </div>
+    `).join('');
+    
+    postsFeed.innerHTML = postsHTML;
+}
+
+function toggleLike(postId) {
+    const post = adminPosts.find(p => p.id === postId);
+    if (post) {
+        if (post.liked) {
+            post.likes--;
+            post.liked = false;
+        } else {
+            post.likes++;
+            post.liked = true;
+        }
+        loadAdminPosts();
+    }
+}
+
+function commentPost(postId) {
+    const comment = prompt('Add a comment:');
+    if (comment && comment.trim()) {
+        const post = adminPosts.find(p => p.id === postId);
+        if (post) {
+            post.comments++;
+            loadAdminPosts();
+            showToast('Comment added!', 'success');
+        }
+    }
+}
+
+function sharePost(postId) {
+    const post = adminPosts.find(p => p.id === postId);
+    if (post) {
+        post.shares++;
+        loadAdminPosts();
+        showToast('Post shared!', 'success');
+    }
+}
+
+// Handle post input keypress
+function handlePostKeyPress(event) {
+    if (event.key === 'Enter') {
+        createPost('text');
+    }
+}
+
+// Student Tab Navigation
+function showStudentTab(tabName) {
+    // Hide homepage content and show tab content
+    const homepageContent = document.getElementById('student-homepage-content');
+    const tabContent = document.querySelector('#student-homepage .tab-content');
+    const navTabs = document.querySelector('#student-homepage .admin-nav-tabs');
+    
+    if (tabName === 'homepage') {
+        homepageContent.style.display = 'block';
+        tabContent.style.display = 'none';
+        navTabs.style.display = 'none';
+        return;
+    }
+    
+    // Show tab content
+    homepageContent.style.display = 'none';
+    tabContent.style.display = 'block';
+    navTabs.style.display = 'flex';
+    
+    // Hide all tab panels
+    document.querySelectorAll('#student-homepage .tab-panel').forEach(panel => {
+        panel.classList.remove('active');
+    });
+    
+    // Remove active class from all tab buttons
+    document.querySelectorAll('#student-homepage .nav-tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Show selected tab panel
+    document.getElementById(`${tabName}-tab`).classList.add('active');
+    
+    // Add active class to clicked tab button
+    event.target.classList.add('active');
+    
+    // Load specific content based on tab
+    switch(tabName) {
+        case 'announcements':
+            loadStudentAnnouncements();
+            break;
+        case 'messages':
+            loadStudentMessages();
+            break;
+        case 'profile':
+            loadStudentProfile();
+            break;
+    }
+}
+
+// Student Messaging Functions
+function sendMessage() {
+    const input = document.getElementById('chatMessageInput');
+    const text = input.value.trim();
+    
+    if (!text) return;
+
+    const message = {
+        id: Date.now(),
+        sender: 'student',
+        text: text,
+        timestamp: new Date().toISOString(),
+        studentId: currentUser.studentData.id
+    };
+
+    const studentMessages = JSON.parse(localStorage.getItem('studentMessages') || '[]');
+    studentMessages.push(message);
+    localStorage.setItem('studentMessages', JSON.stringify(studentMessages));
+    
+    input.value = '';
+    loadStudentMessages();
+    
+    // Simulate admin response (in real app, this would be handled by server)
+    setTimeout(() => {
+        simulateAdminResponse();
+    }, 2000);
+}
+
+function simulateAdminResponse() {
+    const responses = [
+        "Thank you for your message. We'll get back to you soon.",
+        "We've received your inquiry and will review it shortly.",
+        "Thanks for reaching out! Is there anything specific we can help you with?",
+        "We appreciate your message. Our team will respond within 24 hours.",
+        "Hello! How can we assist you today?"
+    ];
+
+    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+    
+    const adminMessage = {
+        id: Date.now(),
+        sender: 'admin',
+        text: randomResponse,
+        timestamp: new Date().toISOString(),
+        studentId: currentUser.studentData.id
+    };
+
+    const studentMessages = JSON.parse(localStorage.getItem('studentMessages') || '[]');
+    studentMessages.push(adminMessage);
+    localStorage.setItem('studentMessages', JSON.stringify(studentMessages));
+    loadStudentMessages();
+}
+
+function handleChatKeyPress(event) {
+    if (event.key === 'Enter') {
+        sendMessage();
+    }
+}
+
+function triggerFileUpload() {
+    document.getElementById('chatFileInput').click();
+}
+
+// Student Announcement Functions
+function togglePostLike(postId) {
+    const adminPosts = JSON.parse(localStorage.getItem('adminPosts') || '[]');
+    const post = adminPosts.find(p => p.id === postId);
+    if (post) {
+        if (post.liked) {
+            post.likes--;
+            post.liked = false;
+        } else {
+            post.likes++;
+            post.liked = true;
+        }
+        
+        // Update localStorage
+        localStorage.setItem('adminPosts', JSON.stringify(adminPosts));
+        loadStudentAnnouncements();
+    }
+}
+
+function toggleComments(postId) {
+    const commentsSection = document.getElementById(`comments-${postId}`);
+    if (commentsSection.style.display === 'none') {
+        commentsSection.style.display = 'block';
+    } else {
+        commentsSection.style.display = 'none';
+    }
+}
+
+function addComment(postId) {
+    const input = document.getElementById(`commentInput-${postId}`);
+    const text = input.value.trim();
+    
+    if (!text) return;
+
+    const comment = {
+        id: Date.now(),
+        postId: postId,
+        author: currentUser.name,
+        text: text,
+        timestamp: new Date().toISOString()
+    };
+
+    const studentComments = JSON.parse(localStorage.getItem('studentComments') || '[]');
+    studentComments.push(comment);
+    localStorage.setItem('studentComments', JSON.stringify(studentComments));
+    
+    input.value = '';
+    loadStudentAnnouncements();
+    showToast('Comment added successfully!', 'success');
+}
+
+function renderComments(comments) {
+    if (comments.length === 0) {
+        return '<p style="text-align: center; color: #9ca3af; font-style: italic;">No comments yet</p>';
+    }
+
+    return comments.map(comment => `
+        <div class="comment-item">
+            <div class="comment-avatar">${comment.author.charAt(0).toUpperCase()}</div>
+            <div class="comment-content">
+                <div class="comment-author">${comment.author}</div>
+                <div class="comment-text">${comment.text}</div>
+                <div class="comment-time">${formatDate(comment.timestamp)}</div>
+            </div>
+        </div>
+    `).join('');
 }
