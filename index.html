@@ -6,6 +6,1599 @@
     <title>GranTES - Smart Subsidy Management System</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* University Student Government Background */
+        body {
+            background-image: url('nemsubackground.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+
+        /* Add overlay for better text readability */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.104);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Ensure main content has proper background */
+        .main-container {
+            background: rgba(255, 255, 255, 0.029);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            margin: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Adjust navbar for better visibility */
+        .navbar {
+            background: rgba(50, 112, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Announcements Box Styles */
+        .announcements-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .announcements-box {
+            background: linear-gradient(135deg, #ff9d0a 0%, #ff9d0a 100%);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .announcements-header {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .announcements-tabs {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .announcements-tabs .tab-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .announcements-tabs .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .announcements-tabs .tab-btn.active {
+            background: rgba(255, 255, 255, 0.9);
+            color: #667eea;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .announcements-content {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1.5rem;
+            min-height: 300px;
+        }
+
+        .announcement-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .announcement-item:hover {
+            background: rgba(102, 126, 234, 0.05);
+            padding-left: 0.5rem;
+            border-radius: 8px;
+        }
+
+        .announcement-item:last-child {
+            border-bottom: none;
+        }
+
+        .announcement-category {
+            background: linear-gradient(135deg, #244cfd, #244cfd);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 1rem;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .announcement-title {
+            flex: 1;
+            color: #333;
+            font-weight: 500;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            margin-right: 1rem;
+        }
+
+        .announcement-date {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 0.85rem;
+            min-width: 40px;
+            text-align: right;
+        }
+
+        /* Facebook Group Section Styles */
+        .facebook-group-section {
+            background: linear-gradient(135deg, #1877f2 0%, #42a5f5 100%);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem auto;
+            max-width: 800px;
+            color: white;
+            box-shadow: 0 4px 15px rgba(24, 119, 242, 0.3);
+        }
+
+        .facebook-group-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .facebook-group-header i {
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .facebook-group-header h4 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .facebook-group-content p {
+            margin: 0 0 1rem 0;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .facebook-group-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .facebook-group-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Quick Links Section Styles */
+        .quick-links-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem auto;
+            max-width: 800px;
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Updates & Announcements Box Styles */
+        .updates-announcements-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .updates-announcements-box {
+            background: linear-gradient(135deg, #ff9d0a 0%, #ff9d0a 100%);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .updates-announcements-header {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .updates-announcements-tabs {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .updates-announcements-tabs .tab-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .updates-announcements-tabs .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .updates-announcements-tabs .tab-btn.active {
+            background: rgba(255, 255, 255, 0.9);
+            color: #667eea;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .updates-announcements-content {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1.5rem;
+            min-height: 300px;
+        }
+
+        .update-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .update-item:hover {
+            background: rgba(102, 126, 234, 0.05);
+            padding-left: 0.5rem;
+            border-radius: 8px;
+        }
+
+        .update-item:last-child {
+            border-bottom: none;
+        }
+
+        .update-category {
+            background: linear-gradient(135deg, #244cfd, #244cfd);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 1rem;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .update-title {
+            flex: 1;
+            color: #333;
+            font-weight: 500;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            margin-right: 1rem;
+        }
+
+        .update-date {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 0.85rem;
+            min-width: 40px;
+            text-align: right;
+        }
+
+        .quick-links-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .quick-links-header i {
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .quick-links-header h4 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .quick-links-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .quick-link-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            border: none;
+            font-family: inherit;
+        }
+
+        .quick-link-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Announcements List Container */
+        .announcements-list {
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            padding-top: 1rem;
+        }
+
+        /* GranTES List Modal Styles */
+        .grantes-list-modal {
+            max-width: 900px;
+            width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .grantes-list-container {
+            padding: 1rem 0;
+        }
+
+        .grantes-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .search-container {
+            position: relative;
+            flex: 1;
+            max-width: 300px;
+        }
+
+        .search-container input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-container input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-container i {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .grantes-stats {
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.9rem;
+        }
+
+        .grantes-list-content {
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .grantes-student-item {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 1rem;
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            align-items: center;
+            transition: background-color 0.2s ease;
+        }
+
+        .grantes-student-item:last-child {
+            border-bottom: none;
+        }
+
+        .grantes-student-item:nth-child(even) {
+            background: #f9fafb;
+        }
+
+        .grantes-student-item:hover {
+            background: #f3f4f6;
+        }
+
+        .grantes-student-name {
+            font-weight: 600;
+            color: #374151;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .grantes-student-name i {
+            color: #667eea;
+        }
+
+        .grantes-student-info {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .grantes-student-status {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .grantes-student-status.active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .grantes-student-status.pending {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .grantes-student-status.approved {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .grantes-student-status.rejected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .no-grantes {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: #6b7280;
+        }
+
+        .no-grantes i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .no-grantes h4 {
+            margin: 0 0 0.5rem 0;
+            color: #374151;
+        }
+
+        .no-grantes p {
+            margin: 0;
+            font-size: 0.875rem;
+        }
+
+        /* Enhanced Post Creation Styles */
+        .post-input-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .post-audience-selector {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .audience-select, .course-select {
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            background: white;
+            color: #374151;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .audience-select:focus, .course-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .audience-select {
+            min-width: 150px;
+        }
+
+        .course-select {
+            min-width: 120px;
+        }
+
+        .post-action-btn.publish {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+        }
+
+        .post-action-btn.publish:hover {
+            box-shadow: 0 8px 25px rgba(34, 197, 94, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* Post Feed Enhancements */
+        .post-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+            border-left: 4px solid #667eea;
+        }
+
+        .post-audience-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+
+        .post-audience-badge.all {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .post-audience-badge.approved {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .post-audience-badge.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .post-audience-badge.specific {
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .announcements-container {
+                margin: 1rem auto;
+                padding: 0 0.5rem;
+            }
+
+            .announcements-header {
+                padding: 0.75rem 1rem;
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+
+            .announcements-tabs {
+                justify-content: center;
+            }
+
+            .announcements-content {
+                padding: 1rem;
+            }
+
+            .announcement-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .announcement-category {
+                margin-right: 0;
+                margin-bottom: 0.25rem;
+            }
+
+            .announcement-title {
+                margin-right: 0;
+                margin-bottom: 0.25rem;
+            }
+
+            .announcement-date {
+                text-align: left;
+                align-self: flex-end;
+            }
+        }
+
+        /* Animation for filtering */
+        .announcement-item {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Admin Quick Actions Styles */
+        .admin-quick-actions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .register-student-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .register-student-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            z-index: 1000;
+            margin-top: 0.5rem;
+        }
+
+        .register-student-container:hover .register-student-dropdown {
+            display: block;
+        }
+
+        .quick-action-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            min-width: 180px;
+            justify-content: center;
+        }
+
+        .quick-action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .quick-action-btn i {
+            font-size: 1.1rem;
+        }
+
+        .quick-action-btn.register-student {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+        }
+
+        .quick-action-btn.register-student:hover {
+            box-shadow: 0 8px 25px rgba(34, 197, 94, 0.4);
+        }
+
+        .quick-action-btn.view-applications {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+        }
+
+        .quick-action-btn.view-applications:hover {
+            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+        }
+
+        .quick-action-btn.manage-students {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+        }
+
+        .quick-action-btn.manage-students:hover {
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+        }
+
+        /* Student Registration Modal Styles */
+        .student-registration-modal {
+            max-width: 600px;
+            width: 90%;
+        }
+
+        .student-registration-modal .form-row {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .student-registration-modal .form-row .form-group {
+            flex: 1;
+        }
+
+        .student-registration-modal .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        /* Bulk Registration Modal Styles */
+        .bulk-registration-modal {
+            max-width: 900px;
+            width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .bulk-step {
+            display: none;
+        }
+
+        .bulk-step.active {
+            display: block;
+        }
+
+        .upload-section {
+            margin-bottom: 2rem;
+        }
+
+        .upload-area {
+            border: 2px dashed #667eea;
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            text-align: center;
+            background: #f8fafc;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: #4f46e5;
+            background: #f1f5f9;
+        }
+
+        .upload-area.dragover {
+            border-color: #22c55e;
+            background: #f0fdf4;
+        }
+
+        .upload-area i {
+            font-size: 3rem;
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+
+        .upload-area h4 {
+            margin: 0 0 0.5rem 0;
+            color: #374151;
+        }
+
+        .upload-area p {
+            margin: 0 0 1.5rem 0;
+            color: #6b7280;
+        }
+
+        .file-info {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+            background: #f9fafb;
+        }
+
+        .file-details {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .file-details i {
+            font-size: 2rem;
+            color: #22c55e;
+        }
+
+        .file-text {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .file-size {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .bulk-form-header {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .bulk-form-header h4 {
+            margin: 0 0 0.5rem 0;
+            color: #374151;
+        }
+
+        .bulk-form-header p {
+            margin: 0;
+            color: #6b7280;
+        }
+
+        .file-format-info {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin: 0.5rem 0;
+        }
+
+        .quick-actions-bar {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .quick-action-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .quick-action-group label {
+            font-weight: 600;
+            color: #374151;
+            white-space: nowrap;
+        }
+
+        .quick-action-group input {
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            min-width: 150px;
+        }
+
+        .students-section {
+            margin-bottom: 2rem;
+        }
+
+        .students-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .students-header h5 {
+            margin: 0;
+            color: #374151;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .students-summary {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .summary-item {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .text-success {
+            color: #22c55e;
+        }
+
+        .text-warning {
+            color: #f59e0b;
+        }
+
+        .students-list {
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .student-entry {
+            display: grid;
+            grid-template-columns: 2fr 1.5fr 1.5fr auto;
+            gap: 1rem;
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            align-items: center;
+            transition: background-color 0.2s ease;
+        }
+
+        .student-entry:last-child {
+            border-bottom: none;
+        }
+
+        .student-entry:nth-child(even) {
+            background: #f9fafb;
+        }
+
+        .student-entry:hover {
+            background: #f3f4f6;
+        }
+
+        .student-entry.complete {
+            background: #f0fdf4;
+            border-left: 4px solid #22c55e;
+        }
+
+        .student-entry.incomplete {
+            background: #fefce8;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .student-name {
+            font-weight: 600;
+            color: #374151;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .student-entry input {
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .student-entry input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .student-entry input.error {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+
+        .remove-student-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 0.75rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: background-color 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .remove-student-btn:hover {
+            background: #dc2626;
+        }
+
+        .btn-large {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+        }
+
+        .btn-success:hover {
+            box-shadow: 0 8px 25px rgba(34, 197, 94, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn-success:disabled {
+            background: #9ca3af;
+            box-shadow: none;
+            transform: none;
+            cursor: not-allowed;
+        }
+
+        /* Student Homepage Styles */
+        .application-status-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border-left: 4px solid #667eea;
+        }
+
+        .status-card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .status-card-header i {
+            font-size: 2rem;
+            color: #667eea;
+        }
+
+        .status-card-header h3 {
+            margin: 0;
+            color: #374151;
+        }
+
+        .status-card-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .status-display {
+            flex: 1;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .status-badge.not-submitted {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-badge.pending {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-badge.approved {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-badge.rejected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-display p {
+            margin: 0;
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+
+        /* Posts & Announcements Styles */
+        .posts-section, .announcements-section {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .posts-section h3, .announcements-section h3 {
+            margin: 0 0 0.5rem 0;
+            color: #374151;
+        }
+
+        .posts-section p, .announcements-section p {
+            margin: 0 0 2rem 0;
+            color: #6b7280;
+        }
+
+        .post-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .post-header {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .post-author-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+
+        .post-author-info h4 {
+            margin: 0;
+            color: #374151;
+            font-size: 1rem;
+        }
+
+        .post-author-info p {
+            margin: 0;
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+
+        .post-content {
+            padding: 1.5rem;
+        }
+
+        .post-text {
+            color: #374151;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .post-actions {
+            display: flex;
+            gap: 1rem;
+            padding: 0 1.5rem 1rem;
+        }
+
+        .post-action-btn {
+            background: none;
+            border: none;
+            color: #6b7280;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .post-action-btn:hover {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .post-action-btn.liked {
+            color: #ef4444;
+        }
+
+        .post-action-btn.liked:hover {
+            background: #fef2f2;
+        }
+
+        .comments-section {
+            border-top: 1px solid #e5e7eb;
+            padding: 1rem 1.5rem;
+            background: #f9fafb;
+        }
+
+        .comment-form {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .comment-input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            outline: none;
+        }
+
+        .comment-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .comment-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .comment-btn:hover {
+            background: #5a67d8;
+        }
+
+        .comments-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .comment-item {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .comment-avatar {
+            width: 32px;
+            height: 32px;
+            background: #e5e7eb;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: #6b7280;
+        }
+
+        .comment-content {
+            flex: 1;
+            background: white;
+            padding: 0.75rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .comment-author {
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .comment-text {
+            color: #374151;
+            font-size: 0.875rem;
+            line-height: 1.4;
+        }
+
+        .comment-time {
+            color: #9ca3af;
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+        }
+
+        /* Messenger Styles */
+        .messages-section {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .messages-section h3 {
+            margin: 0 0 0.5rem 0;
+            color: #374151;
+        }
+
+        .messages-section p {
+            margin: 0 0 2rem 0;
+            color: #6b7280;
+        }
+
+        .messenger-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .messenger-chat {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            background: #f8fafc;
+        }
+
+        .message-item {
+            display: flex;
+            margin-bottom: 1rem;
+            align-items: flex-end;
+        }
+
+        .message-item.sent {
+            justify-content: flex-end;
+        }
+
+        .message-item.received {
+            justify-content: flex-start;
+        }
+
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin: 0 0.5rem;
+        }
+
+        .message-item.sent .message-avatar {
+            background: #667eea;
+            color: white;
+            order: 2;
+        }
+
+        .message-item.received .message-avatar {
+            background: #e5e7eb;
+            color: #6b7280;
+        }
+
+        .message-bubble {
+            max-width: 70%;
+            padding: 0.75rem 1rem;
+            border-radius: 18px;
+            position: relative;
+        }
+
+        .message-item.sent .message-bubble {
+            background: #667eea;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message-item.received .message-bubble {
+            background: white;
+            color: #374151;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .message-text {
+            font-size: 0.875rem;
+            line-height: 1.4;
+            margin: 0;
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            margin-top: 0.25rem;
+        }
+
+        .message-item.sent .message-time {
+            text-align: right;
+        }
+
+        .chat-input-container {
+            border-top: 1px solid #e5e7eb;
+            padding: 1rem;
+            background: white;
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: #f8fafc;
+            border-radius: 24px;
+            padding: 0.5rem;
+        }
+
+        .chat-attach-btn {
+            background: none;
+            border: none;
+            color: #6b7280;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .chat-attach-btn:hover {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .chat-message-input {
+            flex: 1;
+            border: none;
+            background: none;
+            outline: none;
+            padding: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .chat-send-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .chat-send-btn:hover {
+            background: #5a67d8;
+            transform: scale(1.05);
+        }
+
+        .chat-send-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #6b7280;
+            font-size: 0.875rem;
+            font-style: italic;
+            margin-bottom: 1rem;
+        }
+
+        .typing-dots {
+            display: inline-block;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dots:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dots:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                opacity: 0.3;
+            }
+            30% {
+                opacity: 1;
+            }
+        }
+
+        .no-posts, .no-messages {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: #6b7280;
+        }
+
+        .no-posts i, .no-messages i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .no-posts h4, .no-messages h4 {
+            margin: 0 0 0.5rem 0;
+            color: #374151;
+        }
+
+        .no-posts p, .no-messages p {
+            margin: 0;
+            font-size: 0.875rem;
+        }
+
+        /* Responsive Design for Quick Actions */
+        @media (max-width: 768px) {
+            .admin-quick-actions {
+                flex-direction: column;
+            }
+
+            .quick-action-btn {
+                min-width: auto;
+                width: 100%;
+            }
+
+            .student-registration-modal .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .student-registration-modal .modal-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Navigation -->
@@ -13,13 +1606,11 @@
         <div class="nav-container">
             <div class="nav-logo">
                 <img src="nemsulogo.png" alt="NEMSULOGO" width="80">
-                <img src="granteslogo.png" alt="NEMSULOGO" width="94">
                 <span>GranTES</span>
             </div>
             <div class="nav-menu">
                 <a href="#" class="nav-link" onclick="showHome()">Home</a>
                 <a href="#" class="nav-link" onclick="showLogin()">Login</a>
-                <a href="#" class="nav-link" onclick="showRegister()">Register</a>
             </div>
         </div>
     </nav>
@@ -32,33 +1623,76 @@
                 <div class="logo-content">
                     <h1>Smart Subsidy Management System</h1>
                     <p>Streamline your educational subsidy applications with our comprehensive management platform</p>
-                    <div class="logo-buttons">
-                        <button class="btn btn-primary" onclick="showRegister()">Get Started</button>
-                        <button class="btn btn-secondary" onclick="showLogin()">Login</button>
-                    </div>
+                    <a href="https://docs.google.com/forms/d/e/1FAIpQLSejN9ltqtPy2eiC3TtPXPBl0bGLwwb6UjfbT5YITEVl8BiOcA/viewform?usp=header" target="_blank" class="btn btn-primary btn-large">Apply Here</a>
                 </div>
                 <div class="logo-image">
                     <img src="nemsulogo.png" alt="NEMSULOGO" width="300">
                 </div>
             </div>
-            
-            <div class="features">
-                <div class="feature-card">
-                    <i class="fas fa-user-graduate"></i>
-                    <h3>For Students</h3>
-                    <p>Submit applications, track status, and manage your subsidy requirements</p>
+
+            <!-- Quick Links Section -->
+            <div class="quick-links-section">
+                <div class="quick-links-header">
+                    <i class="fas fa-link"></i>
+                    <h4>Quick Links</h4>
                 </div>
-                <div class="feature-card">
-                    <i class="fas fa-user-shield"></i>
-                    <h3>For Admins</h3>
-                    <p>Review applications, manage student records, and generate reports</p>
-                </div>
-                <div class="feature-card">
-                    <i class="fas fa-chart-line"></i>
-                    <h3>Analytics</h3>
-                    <p>Comprehensive reporting and tracking of subsidy distribution</p>
+                <div class="quick-links-buttons">
+                    <a href="https://ched.gov.ph/" target="_blank" class="quick-link-btn">
+                        <i class="fas fa-graduation-cap"></i>
+                        CHED Website
+                    </a>
+                    <button class="quick-link-btn" onclick="showGrantesList()">
+                        <i class="fas fa-list"></i>
+                        List of GranTES
+                    </button>
                 </div>
             </div>
+
+            <!-- Updates & Announcements Box -->
+            <div class="updates-announcements-container">
+                <div class="updates-announcements-box">
+                    <div class="updates-announcements-header">
+                        <div class="updates-announcements-tabs">
+                            <button class="tab-btn active" onclick="filterUpdates('all')">All</button>
+                            <button class="tab-btn" onclick="filterUpdates('updates')">Updates</button>
+                            <button class="tab-btn" onclick="filterUpdates('announcements')">Announcements</button>
+                        </div>
+                    </div>
+                    <div class="updates-announcements-content">
+                        <div class="update-item" data-category="announcements">
+                            <div class="update-category">[Announcement]</div>
+                            <div class="update-title">New Application Period Open - Submit Your Requirements</div>
+                            <div class="update-date">12/15</div>
+                        </div>
+                        <div class="update-item" data-category="updates">
+                            <div class="update-category">[Update]</div>
+                            <div class="update-title">System Maintenance Scheduled for December 15th</div>
+                            <div class="update-date">12/10</div>
+                        </div>
+                        <div class="update-item" data-category="announcements">
+                            <div class="update-category">[Announcement]</div>
+                            <div class="update-title">Deadline Extension for Subsidy Applications</div>
+                            <div class="update-date">12/05</div>
+                        </div>
+                        <div class="update-item" data-category="updates">
+                            <div class="update-category">[Update]</div>
+                            <div class="update-title">New Features Added to Student Dashboard</div>
+                            <div class="update-date">11/28</div>
+                        </div>
+                        <div class="update-item" data-category="announcements">
+                            <div class="update-category">[Announcement]</div>
+                            <div class="update-title">Important: Update Your Student Information</div>
+                            <div class="update-date">11/20</div>
+                        </div>
+                        <div class="update-item" data-category="updates">
+                            <div class="update-category">[Update]</div>
+                            <div class="update-title">System Performance Improvements</div>
+                            <div class="update-date">11/15</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
         </section>
 
         <!-- Login Section -->
@@ -71,15 +1705,19 @@
                 <form class="auth-form" onsubmit="handleLogin(event)">
                     <div class="form-group">
                         <label for="loginRole">Login as:</label>
-                        <select id="loginRole" required>
+                        <select id="loginRole" required onchange="handleRoleChange()">
                             <option value="">Select Role</option>
                             <option value="student">Student</option>
                             <option value="admin">Admin</option>
                         </select>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" id="loginEmailGroup">
                         <label for="loginEmail">Email:</label>
                         <input type="email" id="loginEmail" required>
+                    </div>
+                    <div class="form-group" id="loginAwardNumberGroup" style="display: none;">
+                        <label for="loginAwardNumber">Award Number:</label>
+                        <input type="text" id="loginAwardNumber">
                     </div>
                     <div class="form-group">
                         <label for="loginPassword">Password:</label>
@@ -148,149 +1786,145 @@
             </div>
         </section>
 
-        <!-- Student Dashboard -->
-        <section id="student-dashboard" class="section">
-            <div class="dashboard-header">
-                <h2>Student Dashboard</h2>
-                <div class="user-info">
-                    <span id="studentName"></span>
-                    <button class="btn btn-secondary" onclick="logout()">Logout</button>
-                </div>
-            </div>
-            
-            <div class="dashboard-content">
-                <div class="dashboard-stats">
-                    <div class="stat-card">
-                        <i class="fas fa-file-alt"></i>
-                        <h3>Application Status</h3>
-                        <p id="applicationStatus">Pending</p>
-                    </div>
-                    <div class="stat-card">
-                        <i class="fas fa-bell"></i>
-                        <h3>Notifications</h3>
-                        <p id="notificationCount">0</p>
+        <!-- Student Homepage -->
+        <section id="student-homepage" class="section">
+            <div class="admin-layout">
+                <!-- Left Sidebar -->
+                <div class="admin-sidebar">
+                    <h2>Student Portal</h2>
+                    <div class="sidebar-stats">
+                        <div class="sidebar-stat-card">
+                            <i class="fas fa-bell"></i>
+                            <div class="stat-info">
+                                <h3>Notifications</h3>
+                                <p id="studentNotificationCount">0</p>
+                            </div>
+                        </div>
+                        <div class="sidebar-stat-card">
+                            <i class="fas fa-comments"></i>
+                            <div class="stat-info">
+                                <h3>Messages</h3>
+                                <p id="studentMessageCount">0</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="dashboard-tabs">
-                    <button class="tab-btn active" onclick="showStudentTab('application')">Application</button>
-                    <button class="tab-btn" onclick="showStudentTab('profile')">Profile</button>
-                    <button class="tab-btn" onclick="showStudentTab('notifications')">Notifications</button>
-                </div>
-
-                <div class="tab-content">
-                    <!-- Application Tab -->
-                    <div id="application-tab" class="tab-panel active">
-                        <div class="application-form">
-                            <h3>Submit Requirements</h3>
-                            <form onsubmit="submitApplication(event)">
-                                <div class="form-group">
-                                    <label for="idPictureUpload">Upload ID Picture:</label>
-                                    <input type="file" id="idPictureUpload" accept=".jpg,.jpeg,.png" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="idNumber">ID Number:</label>
-                                    <input type="text" id="idNumber" placeholder="Enter ID number">
-                                </div>
-                                <div class="form-group">
-                                    <label for="corUpload">Upload COR:</label>
-                                    <input type="file" id="corUpload" accept=".pdf,.jpg,.jpeg,.png" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="applicationNotes">Additional Notes:</label>
-                                    <textarea id="applicationNotes" rows="4" placeholder="Any additional information..."></textarea>
-                                </div>
-                                <button type="submit" class="btn btn-primary">Submit Application</button>
-                            </form>
+                <!-- Main Content Area -->
+                <div class="admin-main-content">
+                    <div class="admin-content-header">
+                        <button class="admin-homepage-btn" onclick="showStudentTab('homepage')">
+                            <i class="fas fa-home"></i>
+                            Student Homepage
+                        </button>
+                        <div class="user-info">
+                            <span id="studentName"></span>
+                            <button class="btn btn-secondary" onclick="logout()">Logout</button>
                         </div>
                     </div>
 
-                    <!-- Profile Tab -->
-                    <div id="profile-tab" class="tab-panel">
-                        <div class="profile-card">
-                            <div class="profile-card-header">
-                                <div class="profile-avatar">
-                                    <i class="fas fa-user-graduate"></i>
-                                </div>
-                                <div class="profile-header-text">
-                                    <h3 id="profileName"></h3>
-                                    <div class="profile-meta">
-                                        <span id="profileEmail"></span>
-                                        <span class="dot">•</span>
-                                        <span id="profileStudentId"></span>
-                                    </div>
-                                </div>
-                                <span class="status-badge" id="profileStatus"></span>
-                            </div>
-
-                            <div class="profile-info-grid">
-                                <div class="profile-tile">
-                                    <div class="tile-icon"><i class="fas fa-book"></i></div>
-                                    <div class="tile-content">
-                                        <div class="tile-label">Course</div>
-                                        <div class="tile-value" id="profileCourse"></div>
-                                    </div>
-                                </div>
-                                <div class="profile-tile">
-                                    <div class="tile-icon"><i class="fas fa-layer-group"></i></div>
-                                    <div class="tile-content">
-                                        <div class="tile-label">Year Level</div>
-                                        <div class="tile-value" id="profileYear"></div>
-                                    </div>
+                    <div class="admin-content-body">
+                        <!-- Student Homepage Content -->
+                        <div id="student-homepage-content" class="admin-homepage-content">
+                            <!-- Posts Feed -->
+                            <div class="posts-feed" id="studentPostsFeed">
+                                <div class="welcome-message">
+                                    <h3>Welcome to the Student Portal</h3>
+                                    <p>Stay updated with announcements and communicate with the administration team.</p>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Messenger-style Profile Chat -->
-                        <div class="profile-chat-container" style="margin-top: 1.5rem;">
-                            <div class="profile-chat-header">
-                                <div style="display:flex; align-items:center; gap:0.75rem;">
-                                    <div class="profile-avatar" style="width:36px; height:36px;">
-                                        <i class="fas fa-user-shield" style="font-size:1rem;"></i>
+                        <!-- Navigation Tabs -->
+                        <div class="admin-nav-tabs">
+                            <button class="nav-tab-btn" onclick="showStudentTab('announcements')">Announcements</button>
+                            <button class="nav-tab-btn" onclick="showStudentTab('messages')">Messages</button>
+                            <button class="nav-tab-btn active" onclick="showStudentTab('profile')">Profile</button>
+                        </div>
+
+                        <!-- Tab Content (hidden by default) -->
+                        <div class="tab-content" style="display: none;">
+                            <!-- Announcements Tab -->
+                            <div id="announcements-tab" class="tab-panel active">
+                                <div class="announcements-section">
+                                    <h3>Announcements & Posts</h3>
+                                    <p>Stay updated with the latest news and announcements from the administration</p>
+                                    <div class="posts-feed" id="studentAnnouncementsFeed">
+                                        <!-- Admin posts will be loaded here -->
                                     </div>
-                                    <div>
-                                        <div style="font-weight:600; line-height:1;">Admin Support</div>
-                                        <div style="font-size:0.8rem; opacity:0.9; display:flex; align-items:center; gap:0.35rem;">
-                                            <span style="display:inline-block; width:8px; height:8px; background:#22c55e; border-radius:50%;"></span> Online
+                                </div>
+                            </div>
+
+
+                            <!-- Messages Tab -->
+                            <div id="messages-tab" class="tab-panel">
+                                <div class="messages-section">
+                                    <h3>Direct Messages</h3>
+                                    <p>Chat directly with the administration team</p>
+                                    <div class="messenger-container">
+                                        <div class="messenger-chat" id="studentMessengerChat">
+                                            <div class="chat-messages" id="studentChatMessages">
+                                                <!-- Chat messages will be loaded here -->
+                                            </div>
+                                            <div class="chat-input-container">
+                                                <div class="chat-input-wrapper">
+                                                    <button type="button" class="chat-attach-btn" onclick="triggerFileUpload()" title="Attach file">
+                                                        <i class="fas fa-paperclip"></i>
+                                                    </button>
+                                                    <input type="file" id="chatFileInput" style="display: none" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
+                                                    <input type="text" id="chatMessageInput" placeholder="Type a message..." onkeypress="handleChatKeyPress(event)">
+                                                    <button class="chat-send-btn" onclick="sendMessage()" title="Send message">
+                                                        <i class="fas fa-paper-plane"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <button class="btn btn-secondary btn-sm" onclick="toggleProfileChat()" title="Expand/Compress">
-                                    <i class="fas fa-expand-arrows-alt"></i>
-                                </button>
                             </div>
 
-                            <div class="profile-chat-messages" id="profileChatMessages">
-                                <div class="chat-welcome">
-                                    <div class="welcome-message">
-                                        <i class="fas fa-comments"></i>
-                                        <h5>Start chatting with Admin</h5>
-                                        <p>This is a direct message between you and admin.</p>
+                            <!-- Profile Tab -->
+                            <div id="profile-tab" class="tab-panel">
+                                <div class="profile-card">
+                                    <div class="profile-card-header">
+                                        <div class="profile-avatar">
+                                            <i class="fas fa-user-graduate"></i>
+                                        </div>
+                                        <div class="profile-header-text">
+                                            <h3 id="profileName"></h3>
+                                            <div class="profile-meta">
+                                                <span id="profileEmail"></span>
+                                                <span class="dot">•</span>
+                                                <span id="profileStudentId"></span>
+                                            </div>
+                                        </div>
+                                        <span class="status-badge" id="profileStatus"></span>
+                                    </div>
+
+                                    <div class="profile-info-grid">
+                                        <div class="profile-tile">
+                                            <div class="tile-icon"><i class="fas fa-book"></i></div>
+                                            <div class="tile-content">
+                                                <div class="tile-label">Course</div>
+                                                <div class="tile-value" id="profileCourse"></div>
+                                            </div>
+                                        </div>
+                                        <div class="profile-tile">
+                                            <div class="tile-icon"><i class="fas fa-layer-group"></i></div>
+                                            <div class="tile-content">
+                                                <div class="tile-label">Year Level</div>
+                                                <div class="tile-value" id="profileYear"></div>
+                                            </div>
+                                        </div>
+                                        <div class="profile-tile">
+                                            <div class="tile-icon"><i class="fas fa-id-card"></i></div>
+                                            <div class="tile-content">
+                                                <div class="tile-label">Award Number</div>
+                                                <div class="tile-value" id="profileAwardNumber"></div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div class="profile-chat-input-container">
-                                <div class="profile-chat-input-wrapper">
-                                    <button type="button" class="profile-chat-attach-btn" onclick="triggerProfileChatFile()" title="Attach">
-                                        <i class="fas fa-paperclip"></i>
-                                    </button>
-                                    <input type="file" id="profileChatFile" style="display:none" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx">
-                                    <input type="text" id="profileChatInput" placeholder="Write a message..." onkeypress="handleProfileChatKeyPress(event)">
-                                    <button class="profile-chat-send-btn" onclick="sendProfileChatMessage()" title="Send">
-                                        <i class="fas fa-paper-plane"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Notifications Tab -->
-                    <div id="notifications-tab" class="tab-panel">
-                        <div class="notifications-list">
-                            <h3>Notifications</h3>
-                            <div id="notificationsContainer">
-                                <p class="no-notifications">No notifications yet.</p>
                             </div>
                         </div>
                     </div>
@@ -300,46 +1934,148 @@
 
         <!-- Admin Dashboard -->
         <section id="admin-dashboard" class="section">
-            <div class="dashboard-header">
-                <h2>Admin Dashboard</h2>
-                <div class="user-info">
-                    <span>Administrator</span>
-                    <button class="btn btn-secondary" onclick="logout()">Logout</button>
-                </div>
-            </div>
-
-            <div class="dashboard-content">
-                <div class="dashboard-stats">
-                    <div class="stat-card">
-                        <i class="fas fa-users"></i>
-                        <h3>Total Students</h3>
-                        <p id="totalStudents">0</p>
+            <div class="admin-layout">
+                <!-- Left Sidebar -->
+                <div class="admin-sidebar">
+                    <h2>Admin Dashboard</h2>
+                    <div class="sidebar-stats">
+                        <div class="sidebar-stat-card">
+                            <i class="fas fa-users"></i>
+                            <div class="stat-info">
+                                <h3>Total Students</h3>
+                                <p id="totalStudents">0</p>
+                            </div>
+                        </div>
+                        <div class="sidebar-stat-card">
+                            <i class="fas fa-check-circle"></i>
+                            <div class="stat-info">
+                                <h3>INDIGENOUS PEOPLE</h3>
+                                <p id="totalApproved">0</p>
+                            </div>
+                        </div>
+                        <div class="sidebar-stat-card">
+                            <i class="fas fa-clock"></i>
+                            <div class="stat-info">
+                                <h3>PWD's</h3>
+                                <p id="totalPending">0</p>
+                            </div>
+                        </div>
+                        <div class="sidebar-stat-card">
+                            <i class="fas fa-archive"></i>
+                            <div class="stat-info">
+                                <h3>Archived</h3>
+                                <p id="totalArchived">0</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <i class="fas fa-check-circle"></i>
-                        <h3>Approved</h3>
-                        <p id="totalApproved">0</p>
-                    </div>
-                    <div class="stat-card">
-                        <i class="fas fa-clock"></i>
-                        <h3>Pending</h3>
-                        <p id="totalPending">0</p>
-                    </div>
-                    <div class="stat-card">
-                        <i class="fas fa-archive"></i>
-                        <h3>Archived</h3>
-                        <p id="totalArchived">0</p>
-                    </div>
-                </div>
-
-                <div class="dashboard-tabs">
-                    <button class="tab-btn active" onclick="showAdminTab('applications')">Applications</button>
-                    <button class="tab-btn" onclick="showAdminTab('students')">Students</button>
-                    <button class="tab-btn" onclick="showAdminTab('reports')">Reports</button>
-                    <button class="tab-btn" onclick="showAdminTab('settings')">Settings</button>
                 </div>
 
-                <div class="tab-content">
+                <!-- Main Content Area -->
+                <div class="admin-main-content">
+                    <div class="admin-content-header">
+                        <button class="admin-homepage-btn" onclick="showAdminTab('homepage')">
+                            <i class="fas fa-home"></i>
+                            Admin Homepage
+                        </button>
+                        <div class="user-info">
+                            <span>Administrator</span>
+                            <button class="btn btn-secondary" onclick="logout()">Logout</button>
+                        </div>
+                    </div>
+
+                    <div class="admin-content-body">
+                        <!-- Admin Homepage Content -->
+                        <div id="admin-homepage" class="admin-homepage-content">
+                            <!-- Admin Quick Actions -->
+                            <div class="admin-quick-actions">
+                                <div class="register-student-container">
+                                    <button class="quick-action-btn register-student" onclick="openStudentRegistrationModal()">
+                                        <i class="fas fa-user-plus"></i>
+                                        <span>Register Single Student</span>
+                                    </button>
+                                    <div class="register-student-dropdown">
+                                        <button class="quick-action-btn register-student-bulk" onclick="openBulkRegistrationModal()">
+                                            <i class="fas fa-file-excel"></i>
+                                            <span>Bulk Register from Excel</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <button class="quick-action-btn view-applications" onclick="showAdminTab('applications')">
+                                    <i class="fas fa-file-alt"></i>
+                                    <span>View Applications</span>
+                                </button>
+                                <button class="quick-action-btn manage-students" onclick="showAdminTab('students')">
+                                    <i class="fas fa-users"></i>
+                                    <span>Manage Students</span>
+                                </button>
+                            </div>
+
+                            <!-- Post Creation Interface -->
+                            <div class="post-creation-container">
+                                <div class="post-creation-header">
+                                    <div class="admin-profile-pic">
+                                        <i class="fas fa-user-shield"></i>
+                                    </div>
+                                    <div class="post-input-container">
+                                        <input type="text" id="postInput" placeholder="What's on your mind, Administrator?" class="post-input" onkeypress="handlePostKeyPress(event)">
+                                        <div class="post-audience-selector">
+                                            <select id="postAudience" class="audience-select">
+                                                <option value="all">All Students</option>
+                                                <option value="approved">Approved Students Only</option>
+                                                <option value="pending">Pending Students Only</option>
+                                                <option value="specific">Specific Course</option>
+                                            </select>
+                                            <select id="postCourse" class="course-select" style="display: none;">
+                                                <option value="">Select Course</option>
+                                                <option value="BSIT">BSIT</option>
+                                                <option value="BSCS">BSCS</option>
+                                                <option value="BSBA">BSBA</option>
+                                                <option value="BSEd">BSEd</option>
+                                                <option value="BSN">BSN</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="post-separator"></div>
+                                <div class="post-actions">
+                                    <button class="post-action-btn live-video" onclick="createPost('live')">
+                                        <i class="fas fa-video"></i>
+                                        <span>Live video</span>
+                                    </button>
+                                    <button class="post-action-btn photo-video" onclick="createPost('media')">
+                                        <i class="fas fa-images"></i>
+                                        <span>Photo/video</span>
+                                    </button>
+                                    <button class="post-action-btn feeling" onclick="createPost('feeling')">
+                                        <i class="fas fa-smile"></i>
+                                        <span>Feeling/activity</span>
+                                    </button>
+                                    <button class="post-action-btn publish" onclick="publishPost()">
+                                        <i class="fas fa-paper-plane"></i>
+                                        <span>Publish</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Posts Feed -->
+                            <div class="posts-feed" id="postsFeed">
+                                <div class="welcome-message">
+                                    <h3>Welcome to the Admin Dashboard</h3>
+                                    <p>Manage student applications, view reports, and configure system settings from this central location.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Navigation Tabs -->
+                        <div class="admin-nav-tabs">
+                            <button class="nav-tab-btn" onclick="showAdminTab('applications')">Applications</button>
+                            <button class="nav-tab-btn" onclick="showAdminTab('students')">Students</button>
+                            <button class="nav-tab-btn" onclick="showAdminTab('reports')">Reports</button>
+                            <button class="nav-tab-btn active" onclick="showAdminTab('settings')">Settings</button>
+                        </div>
+
+                        <!-- Tab Content (hidden by default) -->
+                        <div class="tab-content" style="display: none;">
                     <!-- Applications Tab -->
                     <div id="applications-tab" class="tab-panel active">
                         <div class="applications-list">
@@ -517,6 +2253,162 @@
         </div>
     </div>
 
+    <!-- Student Registration Modal -->
+    <div id="studentRegistrationModal" class="modal">
+        <div class="modal-content student-registration-modal">
+            <div class="modal-header">
+                <h3>Register New Student</h3>
+                <span class="close" onclick="closeStudentRegistrationModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="studentRegistrationForm" onsubmit="handleStudentRegistration(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="adminFirstName">First Name:</label>
+                            <input type="text" id="adminFirstName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="adminLastName">Last Name:</label>
+                            <input type="text" id="adminLastName" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="adminStudentId">Student ID:</label>
+                        <input type="text" id="adminStudentId" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="adminEmail">Email:</label>
+                        <input type="email" id="adminEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="adminAwardNumber">Award Number:</label>
+                        <input type="text" id="adminAwardNumber" required placeholder="Student's unique award number">
+                    </div>
+                    <div class="form-group">
+                        <label for="adminPassword">Password:</label>
+                        <input type="password" id="adminPassword" required placeholder="Temporary password for student">
+                    </div>
+                    <div class="form-group">
+                        <label for="adminConfirmPassword">Confirm Password:</label>
+                        <input type="password" id="adminConfirmPassword" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="adminCourse">Course:</label>
+                            <input type="text" id="adminCourse" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="adminYear">Year Level:</label>
+                            <select id="adminYear" required>
+                                <option value="">Select Year</option>
+                                <option value="1st">1st Year</option>
+                                <option value="2nd">2nd Year</option>
+                                <option value="3rd">3rd Year</option>
+                                <option value="4th">4th Year</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-primary">Register Student</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeStudentRegistrationModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Student Registration Modal -->
+    <div id="bulkRegistrationModal" class="modal">
+        <div class="modal-content bulk-registration-modal">
+            <div class="modal-header">
+                <h3>Bulk Register Students from Excel</h3>
+                <span class="close" onclick="closeBulkRegistrationModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <!-- Step 1: File Upload -->
+                <div id="bulkStep1" class="bulk-step active">
+                    <div class="upload-section">
+                        <div class="upload-area" id="uploadArea">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <h4>Upload Excel File with Student Names</h4>
+                            <p>Drag and drop your Excel file here or click to browse</p>
+                            <p class="file-format-info">Supported formats: .xlsx, .xls</p>
+                            <input type="file" id="excelFileInput" accept=".xlsx,.xls" style="display: none;">
+                            <button type="button" class="btn btn-primary" onclick="document.getElementById('excelFileInput').click()">
+                                <i class="fas fa-file-excel"></i> Choose Excel File
+                            </button>
+                        </div>
+                        <div class="file-info" id="fileInfo" style="display: none;">
+                            <div class="file-details">
+                                <i class="fas fa-file-excel"></i>
+                                <div class="file-text">
+                                    <div class="file-name" id="fileName"></div>
+                                    <div class="file-size" id="fileSize"></div>
+                                </div>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="removeFile()">Remove</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-primary" id="processFileBtn" onclick="processExcelFile()" disabled>
+                            <i class="fas fa-cogs"></i> Extract Student Names
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="closeBulkRegistrationModal()">Cancel</button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Student Data Entry -->
+                <div id="bulkStep2" class="bulk-step">
+                    <div class="bulk-form-header">
+                        <h4>Enter Award Numbers and Passwords</h4>
+                        <p>For each student, enter their unique award number and password. Students will use these credentials to log in.</p>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="quick-actions-bar">
+                        <div class="quick-action-group">
+                            <label for="defaultPassword">Default Password:</label>
+                            <input type="password" id="defaultPassword" placeholder="e.g., student123" onchange="applyDefaultPassword()">
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="applyDefaultPassword()">
+                                <i class="fas fa-magic"></i> Apply to All
+                            </button>
+                        </div>
+                        <div class="quick-action-group">
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="generateAllAwardNumbers()">
+                                <i class="fas fa-sync"></i> Generate All Award Numbers
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Students List -->
+                    <div class="students-section">
+                        <div class="students-header">
+                            <h5><i class="fas fa-users"></i> Student Accounts (<span id="studentCount">0</span> students)</h5>
+                            <div class="students-summary">
+                                <span class="summary-item"><i class="fas fa-check-circle text-success"></i> <span id="completedCount">0</span> Complete</span>
+                                <span class="summary-item"><i class="fas fa-exclamation-circle text-warning"></i> <span id="incompleteCount">0</span> Incomplete</span>
+                            </div>
+                        </div>
+                        
+                        <div class="students-list" id="studentsList">
+                            <!-- Student entries will be populated here -->
+                        </div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-success btn-large" onclick="registerBulkStudents()" id="registerAllBtn" disabled>
+                            <i class="fas fa-user-plus"></i> Register All Students
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="goToStep1()">
+                            <i class="fas fa-arrow-left"></i> Back to Upload
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="closeBulkRegistrationModal()">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Notification Toast -->
     <div id="notificationToast" class="toast">
         <div class="toast-content">
@@ -525,8 +2417,788 @@
         </div>
     </div>
 
+    <!-- GranTES List Modal -->
+    <div id="grantesListModal" class="modal">
+        <div class="modal-content grantes-list-modal">
+            <div class="modal-header">
+                <h3>List of GranTES Students</h3>
+                <span class="close" onclick="closeGrantesListModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="grantes-list-container">
+                    <div class="grantes-list-header">
+                        <div class="search-container">
+                            <input type="text" id="grantesSearch" placeholder="Search students..." onkeyup="searchGrantes()">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <div class="grantes-stats">
+                            <span id="totalGrantesCount">0</span> Total Students
+                        </div>
+                    </div>
+                    <div class="grantes-list-content" id="grantesListContent">
+                        <!-- Student list will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     
 
+    <script>
+        // Handle role change in login form
+        function handleRoleChange() {
+            const roleSelect = document.getElementById('loginRole');
+            const emailGroup = document.getElementById('loginEmailGroup');
+            const awardNumberGroup = document.getElementById('loginAwardNumberGroup');
+            const emailInput = document.getElementById('loginEmail');
+            const awardNumberInput = document.getElementById('loginAwardNumber');
+            
+            if (roleSelect.value === 'student') {
+                // Show award number field, hide email field
+                emailGroup.style.display = 'none';
+                awardNumberGroup.style.display = 'block';
+                emailInput.required = false;
+                awardNumberInput.required = true;
+            } else if (roleSelect.value === 'admin') {
+                // Show email field, hide award number field
+                emailGroup.style.display = 'block';
+                awardNumberGroup.style.display = 'none';
+                emailInput.required = true;
+                awardNumberInput.required = false;
+            } else {
+                // Hide both fields when no role is selected
+                emailGroup.style.display = 'block';
+                awardNumberGroup.style.display = 'none';
+                emailInput.required = false;
+                awardNumberInput.required = false;
+            }
+        }
+
+        // Initialize the form on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            handleRoleChange();
+        });
+
+        // Filter updates by category
+        function filterUpdates(category) {
+            const items = document.querySelectorAll('.update-item');
+            const tabs = document.querySelectorAll('.updates-announcements-tabs .tab-btn');
+            
+            // Update active tab
+            tabs.forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Filter items
+            items.forEach(item => {
+                if (category === 'all' || item.dataset.category === category) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        // Student Registration Functions
+        function openStudentRegistrationModal() {
+            document.getElementById('studentRegistrationModal').style.display = 'block';
+            // Clear form
+            document.getElementById('studentRegistrationForm').reset();
+        }
+
+        function closeStudentRegistrationModal() {
+            document.getElementById('studentRegistrationModal').style.display = 'none';
+        }
+
+        function handleStudentRegistration(event) {
+            event.preventDefault();
+            
+            const formData = {
+                firstName: document.getElementById('adminFirstName').value,
+                lastName: document.getElementById('adminLastName').value,
+                studentId: document.getElementById('adminStudentId').value,
+                email: document.getElementById('adminEmail').value,
+                awardNumber: document.getElementById('adminAwardNumber').value,
+                password: document.getElementById('adminPassword').value,
+                confirmPassword: document.getElementById('adminConfirmPassword').value,
+                course: document.getElementById('adminCourse').value,
+                year: document.getElementById('adminYear').value
+            };
+
+            // Validate passwords match
+            if (formData.password !== formData.confirmPassword) {
+                showNotification('Passwords do not match!', 'error');
+                return;
+            }
+
+            // Validate password strength
+            if (formData.password.length < 6) {
+                showNotification('Password must be at least 6 characters long!', 'error');
+                return;
+            }
+
+            // Check if student already exists (in a real app, this would be a server call)
+            const existingStudents = JSON.parse(localStorage.getItem('students') || '[]');
+            const existingStudent = existingStudents.find(s => 
+                s.studentId === formData.studentId || 
+                s.email === formData.email || 
+                s.awardNumber === formData.awardNumber
+            );
+
+            if (existingStudent) {
+                showNotification('Student with this ID, email, or award number already exists!', 'error');
+                return;
+            }
+
+            // Create student object
+            const newStudent = {
+                id: Date.now(),
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                studentId: formData.studentId,
+                email: formData.email,
+                awardNumber: formData.awardNumber,
+                password: formData.password, // In production, this should be hashed
+                course: formData.course,
+                year: formData.year,
+                status: 'active',
+                applicationStatus: 'none',
+                registeredDate: new Date().toISOString(),
+                isAdminCreated: true
+            };
+
+            // Save to localStorage (in production, this would be a server call)
+            existingStudents.push(newStudent);
+            localStorage.setItem('students', JSON.stringify(existingStudents));
+
+            // Update admin dashboard stats
+            updateAdminStats();
+
+            // Show success message
+            showNotification(`Student ${formData.firstName} ${formData.lastName} registered successfully! Award Number: ${formData.awardNumber}`, 'success');
+
+            // Close modal and reset form
+            closeStudentRegistrationModal();
+        }
+
+        function showNotification(message, type = 'info') {
+            const toast = document.getElementById('notificationToast');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            toastMessage.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.style.display = 'block';
+            
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 5000);
+        }
+
+        function updateAdminStats() {
+            const students = JSON.parse(localStorage.getItem('students') || '[]');
+            const totalStudents = students.length;
+            const approvedStudents = students.filter(s => s.applicationStatus === 'approved').length;
+            const pendingStudents = students.filter(s => s.applicationStatus === 'pending').length;
+            const archivedStudents = students.filter(s => s.status === 'archived').length;
+
+            document.getElementById('totalStudents').textContent = totalStudents;
+            document.getElementById('totalApproved').textContent = approvedStudents;
+            document.getElementById('totalPending').textContent = pendingStudents;
+            document.getElementById('totalArchived').textContent = archivedStudents;
+        }
+
+        // Bulk Registration Functions
+        let uploadedFile = null;
+        let extractedStudents = [];
+
+        function openBulkRegistrationModal() {
+            document.getElementById('bulkRegistrationModal').style.display = 'block';
+            resetBulkModal();
+        }
+
+        function closeBulkRegistrationModal() {
+            document.getElementById('bulkRegistrationModal').style.display = 'none';
+            resetBulkModal();
+        }
+
+        function resetBulkModal() {
+            // Reset to step 1
+            document.getElementById('bulkStep1').classList.add('active');
+            document.getElementById('bulkStep2').classList.remove('active');
+            
+            // Clear file
+            uploadedFile = null;
+            extractedStudents = [];
+            document.getElementById('excelFileInput').value = '';
+            document.getElementById('uploadArea').style.display = 'block';
+            document.getElementById('fileInfo').style.display = 'none';
+            document.getElementById('processFileBtn').disabled = true;
+            
+            // Clear form
+            document.getElementById('defaultCourse').value = '';
+            document.getElementById('defaultYear').value = '';
+            document.getElementById('defaultPassword').value = '';
+            document.getElementById('studentsList').innerHTML = '';
+        }
+
+        function goToStep1() {
+            document.getElementById('bulkStep1').classList.add('active');
+            document.getElementById('bulkStep2').classList.remove('active');
+        }
+
+        function goToStep2() {
+            document.getElementById('bulkStep1').classList.remove('active');
+            document.getElementById('bulkStep2').classList.add('active');
+        }
+
+        // File upload handling
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.getElementById('excelFileInput');
+            const uploadArea = document.getElementById('uploadArea');
+            
+            if (fileInput && uploadArea) {
+                // Click to upload
+                uploadArea.addEventListener('click', () => {
+                    fileInput.click();
+                });
+
+                // File selection
+                fileInput.addEventListener('change', handleFileSelect);
+
+                // Drag and drop
+                uploadArea.addEventListener('dragover', handleDragOver);
+                uploadArea.addEventListener('dragleave', handleDragLeave);
+                uploadArea.addEventListener('drop', handleDrop);
+            }
+        });
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                processFile(file);
+            }
+        }
+
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.currentTarget.classList.add('dragover');
+        }
+
+        function handleDragLeave(event) {
+            event.currentTarget.classList.remove('dragover');
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('dragover');
+            
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                processFile(files[0]);
+            }
+        }
+
+        function processFile(file) {
+            // Validate file type
+            const validTypes = [
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+                'application/vnd.ms-excel' // .xls
+            ];
+            
+            if (!validTypes.includes(file.type)) {
+                showNotification('Please upload a valid Excel file (.xlsx or .xls)', 'error');
+                return;
+            }
+
+            uploadedFile = file;
+            
+            // Show file info
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = formatFileSize(file.size);
+            document.getElementById('uploadArea').style.display = 'none';
+            document.getElementById('fileInfo').style.display = 'block';
+            document.getElementById('processFileBtn').disabled = false;
+        }
+
+        function removeFile() {
+            uploadedFile = null;
+            document.getElementById('excelFileInput').value = '';
+            document.getElementById('uploadArea').style.display = 'block';
+            document.getElementById('fileInfo').style.display = 'none';
+            document.getElementById('processFileBtn').disabled = true;
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function processExcelFile() {
+            if (!uploadedFile) {
+                showNotification('Please select a file first', 'error');
+                return;
+            }
+
+            // For demo purposes, we'll simulate Excel parsing
+            // In a real implementation, you would use a library like SheetJS
+            showNotification('Processing Excel file...', 'info');
+            
+            // Simulate processing delay
+            setTimeout(() => {
+                // Mock data - in real implementation, parse actual Excel file
+                extractedStudents = [
+                    { firstName: 'John', lastName: 'Doe' },
+                    { firstName: 'Jane', lastName: 'Smith' },
+                    { firstName: 'Michael', lastName: 'Johnson' },
+                    { firstName: 'Sarah', lastName: 'Williams' },
+                    { firstName: 'David', lastName: 'Brown' },
+                    { firstName: 'Emily', lastName: 'Davis' },
+                    { firstName: 'Christopher', lastName: 'Miller' },
+                    { firstName: 'Jessica', lastName: 'Wilson' }
+                ];
+                
+                populateStudentsList();
+                goToStep2();
+                showNotification(`Successfully extracted ${extractedStudents.length} students from Excel file`, 'success');
+            }, 1500);
+        }
+
+        function populateStudentsList() {
+            const container = document.getElementById('studentsList');
+            const defaultCourse = document.getElementById('defaultCourse').value;
+            const defaultYear = document.getElementById('defaultYear').value;
+            const defaultPassword = document.getElementById('defaultPassword').value;
+
+            container.innerHTML = extractedStudents.map((student, index) => `
+                <div class="student-entry" data-index="${index}">
+                    <div class="student-name">
+                        <i class="fas fa-user"></i>
+                        ${student.firstName} ${student.lastName}
+                    </div>
+                    <input type="text" placeholder="Award Number" class="award-number-input" 
+                           value="${generateAwardNumber(index)}" required
+                           onchange="validateStudentEntry(${index})" oninput="updateStudentSummary()">
+                    <input type="password" placeholder="Password" class="password-input" 
+                           value="${defaultPassword}" required
+                           onchange="validateStudentEntry(${index})" oninput="updateStudentSummary()">
+                    <button type="button" class="remove-student-btn" onclick="removeStudent(${index})" title="Remove student">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `).join('');
+            
+            updateStudentSummary();
+        }
+
+        function generateAwardNumber(index) {
+            // Generate a unique award number
+            const year = new Date().getFullYear();
+            const paddedIndex = String(index + 1).padStart(3, '0');
+            return `AW${year}${paddedIndex}`;
+        }
+
+        function removeStudent(index) {
+            if (confirm(`Are you sure you want to remove ${extractedStudents[index].firstName} ${extractedStudents[index].lastName}?`)) {
+                extractedStudents.splice(index, 1);
+                populateStudentsList();
+            }
+        }
+
+        function applyDefaultsToAll() {
+            const defaultCourse = document.getElementById('defaultCourse').value;
+            const defaultYear = document.getElementById('defaultYear').value;
+            const defaultPassword = document.getElementById('defaultPassword').value;
+
+            // Apply defaults to all student entries
+            document.querySelectorAll('.student-entry').forEach((entry, index) => {
+                const courseInput = entry.querySelector('.course-input');
+                const yearInput = entry.querySelector('.year-input');
+                const passwordInput = entry.querySelector('.password-input');
+                
+                if (courseInput && defaultCourse) courseInput.value = defaultCourse;
+                if (yearInput && defaultYear) yearInput.value = defaultYear;
+                if (passwordInput && defaultPassword) passwordInput.value = defaultPassword;
+            });
+
+            updateStudentSummary();
+        }
+
+        function validateStudentEntry(index) {
+            const entry = document.querySelector(`[data-index="${index}"]`);
+            const awardNumberInput = entry.querySelector('.award-number-input');
+            const passwordInput = entry.querySelector('.password-input');
+            
+            let isValid = true;
+            
+            // Clear previous error states
+            awardNumberInput.classList.remove('error');
+            passwordInput.classList.remove('error');
+            entry.classList.remove('complete', 'incomplete');
+            
+            // Validate award number
+            if (!awardNumberInput.value.trim()) {
+                awardNumberInput.classList.add('error');
+                isValid = false;
+            } else {
+                // Check for duplicates
+                const allAwardNumbers = Array.from(document.querySelectorAll('.award-number-input'))
+                    .map(input => input.value.trim())
+                    .filter((value, i) => value && i !== index);
+                
+                if (allAwardNumbers.includes(awardNumberInput.value.trim())) {
+                    awardNumberInput.classList.add('error');
+                    isValid = false;
+                }
+            }
+            
+            // Validate password
+            if (!passwordInput.value.trim() || passwordInput.value.trim().length < 6) {
+                passwordInput.classList.add('error');
+                isValid = false;
+            }
+            
+            // Update entry status
+            if (isValid) {
+                entry.classList.add('complete');
+            } else {
+                entry.classList.add('incomplete');
+            }
+            
+            return isValid;
+        }
+
+        function updateStudentSummary() {
+            const totalStudents = extractedStudents.length;
+            const completedStudents = Array.from(document.querySelectorAll('.student-entry'))
+                .filter(entry => entry.classList.contains('complete')).length;
+            const incompleteStudents = totalStudents - completedStudents;
+            
+            document.getElementById('studentCount').textContent = totalStudents;
+            document.getElementById('completedCount').textContent = completedStudents;
+            document.getElementById('incompleteCount').textContent = incompleteStudents;
+            
+            // Enable/disable register button
+            const registerBtn = document.getElementById('registerAllBtn');
+            if (completedStudents === totalStudents && totalStudents > 0) {
+                registerBtn.disabled = false;
+                registerBtn.innerHTML = `<i class="fas fa-user-plus"></i> Register All ${totalStudents} Students`;
+            } else {
+                registerBtn.disabled = true;
+                registerBtn.innerHTML = `<i class="fas fa-user-plus"></i> Register All Students (${incompleteStudents} incomplete)`;
+            }
+        }
+
+        function registerBulkStudents() {
+            const defaultCourse = document.getElementById('defaultCourse').value;
+            const defaultYear = document.getElementById('defaultYear').value;
+            
+            if (!defaultCourse || !defaultYear) {
+                showNotification('Please fill in default course and year level', 'error');
+                return;
+            }
+
+            const studentsToRegister = [];
+            const errors = [];
+
+            // Validate all entries first
+            let allValid = true;
+            document.querySelectorAll('.student-entry').forEach((entry, index) => {
+                if (!validateStudentEntry(index)) {
+                    allValid = false;
+                }
+            });
+
+            if (!allValid) {
+                showNotification('Please fix all validation errors before registering students', 'error');
+                return;
+            }
+
+            // Collect student data
+            document.querySelectorAll('.student-entry').forEach((entry, index) => {
+                const awardNumber = entry.querySelector('.award-number-input').value.trim();
+                const password = entry.querySelector('.password-input').value.trim();
+                const student = extractedStudents[index];
+
+                studentsToRegister.push({
+                    firstName: student.firstName,
+                    lastName: student.lastName,
+                    studentId: `STU${String(index + 1).padStart(4, '0')}`,
+                    email: `${student.firstName.toLowerCase()}.${student.lastName.toLowerCase()}@student.edu`,
+                    awardNumber: awardNumber,
+                    password: password,
+                    course: defaultCourse,
+                    year: defaultYear,
+                    status: 'active',
+                    applicationStatus: 'none',
+                    registeredDate: new Date().toISOString(),
+                    isAdminCreated: true
+                });
+            });
+
+            // Register all students
+            const existingStudents = JSON.parse(localStorage.getItem('students') || '[]');
+            studentsToRegister.forEach(student => {
+                existingStudents.push(student);
+            });
+            
+            localStorage.setItem('students', JSON.stringify(existingStudents));
+            
+            // Update admin dashboard stats
+            updateAdminStats();
+            
+            showNotification(`Successfully registered ${studentsToRegister.length} students! They can now log in using their award numbers and passwords.`, 'success');
+            closeBulkRegistrationModal();
+        }
+
+        // GranTES List Functions
+        function showGrantesList() {
+            document.getElementById('grantesListModal').style.display = 'block';
+            loadGrantesList();
+        }
+
+        function closeGrantesListModal() {
+            document.getElementById('grantesListModal').style.display = 'none';
+        }
+
+        function loadGrantesList() {
+            const students = JSON.parse(localStorage.getItem('students') || '[]');
+            const container = document.getElementById('grantesListContent');
+            const countElement = document.getElementById('totalGrantesCount');
+            
+            countElement.textContent = students.length;
+            
+            if (students.length === 0) {
+                container.innerHTML = `
+                    <div class="no-grantes">
+                        <i class="fas fa-users"></i>
+                        <h4>No Students Found</h4>
+                        <p>No GranTES students have been registered yet.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = students.map(student => `
+                <div class="grantes-student-item" data-name="${student.firstName} ${student.lastName}" data-course="${student.course}" data-year="${student.year}">
+                    <div class="grantes-student-name">
+                        <i class="fas fa-user-graduate"></i>
+                        ${student.firstName} ${student.lastName}
+                    </div>
+                    <div class="grantes-student-info">${student.course}</div>
+                    <div class="grantes-student-info">${student.year} Year</div>
+                    <div class="grantes-student-status ${student.applicationStatus || 'active'}">
+                        ${student.applicationStatus === 'approved' ? 'Approved' : 
+                          student.applicationStatus === 'pending' ? 'Pending' : 
+                          student.applicationStatus === 'rejected' ? 'Rejected' : 'Active'}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function searchGrantes() {
+            const searchTerm = document.getElementById('grantesSearch').value.toLowerCase();
+            const studentItems = document.querySelectorAll('.grantes-student-item');
+            
+            studentItems.forEach(item => {
+                const name = item.dataset.name.toLowerCase();
+                const course = item.dataset.course.toLowerCase();
+                const year = item.dataset.year.toLowerCase();
+                
+                if (name.includes(searchTerm) || course.includes(searchTerm) || year.includes(searchTerm)) {
+                    item.style.display = 'grid';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const grantesModal = document.getElementById('grantesListModal');
+            if (event.target === grantesModal) {
+                closeGrantesListModal();
+            }
+        }
+
+        // Enhanced Admin Homepage Functions
+        let posts = JSON.parse(localStorage.getItem('adminPosts') || '[]');
+
+        // Handle audience selection change
+        function handleAudienceChange() {
+            const audienceSelect = document.getElementById('postAudience');
+            const courseSelect = document.getElementById('postCourse');
+            
+            if (audienceSelect.value === 'specific') {
+                courseSelect.style.display = 'block';
+            } else {
+                courseSelect.style.display = 'none';
+            }
+        }
+
+        // Handle post key press
+        function handlePostKeyPress(event) {
+            if (event.key === 'Enter') {
+                publishPost();
+            }
+        }
+
+        // Create post function
+        function createPost(type) {
+            const postInput = document.getElementById('postInput');
+            const audience = document.getElementById('postAudience').value;
+            const course = document.getElementById('postCourse').value;
+            
+            if (!postInput.value.trim()) {
+                showNotification('Please enter a message before posting', 'error');
+                return;
+            }
+
+            const newPost = {
+                id: Date.now(),
+                content: postInput.value,
+                type: type,
+                audience: audience,
+                course: course,
+                author: 'Administrator',
+                timestamp: new Date().toISOString(),
+                likes: 0,
+                comments: []
+            };
+
+            posts.unshift(newPost);
+            localStorage.setItem('adminPosts', JSON.stringify(posts));
+            
+            // Clear input
+            postInput.value = '';
+            document.getElementById('postAudience').value = 'all';
+            document.getElementById('postCourse').style.display = 'none';
+            
+            // Refresh posts feed
+            loadPostsFeed();
+            
+            showNotification('Post published successfully!', 'success');
+        }
+
+        // Publish post function
+        function publishPost() {
+            createPost('text');
+        }
+
+        // Load posts feed
+        function loadPostsFeed() {
+            const postsFeed = document.getElementById('postsFeed');
+            
+            if (posts.length === 0) {
+                postsFeed.innerHTML = `
+                    <div class="welcome-message">
+                        <h3>Welcome to the Admin Dashboard</h3>
+                        <p>Manage student applications, view reports, and configure system settings from this central location.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            postsFeed.innerHTML = posts.map(post => `
+                <div class="post-card">
+                    <div class="post-header">
+                        <div class="post-author-avatar">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        <div class="post-author-info">
+                            <h4>${post.author}</h4>
+                            <p>${new Date(post.timestamp).toLocaleDateString()} at ${new Date(post.timestamp).toLocaleTimeString()}</p>
+                        </div>
+                        <span class="post-audience-badge ${post.audience}">
+                            ${post.audience === 'all' ? 'All Students' : 
+                              post.audience === 'approved' ? 'Approved Only' : 
+                              post.audience === 'pending' ? 'Pending Only' : 
+                              post.audience === 'specific' ? post.course : 'All Students'}
+                        </span>
+                    </div>
+                    <div class="post-content">
+                        <div class="post-text">${post.content}</div>
+                        ${post.type === 'media' ? '<div class="post-media"><i class="fas fa-image"></i> Media attached</div>' : ''}
+                        ${post.type === 'live' ? '<div class="post-live"><i class="fas fa-video"></i> Live video</div>' : ''}
+                        ${post.type === 'feeling' ? '<div class="post-feeling"><i class="fas fa-smile"></i> Feeling/Activity</div>' : ''}
+                    </div>
+                    <div class="post-actions">
+                        <button class="post-action-btn" onclick="likePost(${post.id})">
+                            <i class="fas fa-thumbs-up"></i>
+                            <span>${post.likes}</span>
+                        </button>
+                        <button class="post-action-btn" onclick="commentPost(${post.id})">
+                            <i class="fas fa-comment"></i>
+                            <span>Comment</span>
+                        </button>
+                        <button class="post-action-btn" onclick="deletePost(${post.id})">
+                            <i class="fas fa-trash"></i>
+                            <span>Delete</span>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Like post function
+        function likePost(postId) {
+            const post = posts.find(p => p.id === postId);
+            if (post) {
+                post.likes++;
+                localStorage.setItem('adminPosts', JSON.stringify(posts));
+                loadPostsFeed();
+            }
+        }
+
+        // Comment post function
+        function commentPost(postId) {
+            const comment = prompt('Enter your comment:');
+            if (comment && comment.trim()) {
+                const post = posts.find(p => p.id === postId);
+                if (post) {
+                    post.comments.push({
+                        id: Date.now(),
+                        content: comment,
+                        author: 'Administrator',
+                        timestamp: new Date().toISOString()
+                    });
+                    localStorage.setItem('adminPosts', JSON.stringify(posts));
+                    loadPostsFeed();
+                }
+            }
+        }
+
+        // Delete post function
+        function deletePost(postId) {
+            if (confirm('Are you sure you want to delete this post?')) {
+                posts = posts.filter(p => p.id !== postId);
+                localStorage.setItem('adminPosts', JSON.stringify(posts));
+                loadPostsFeed();
+                showNotification('Post deleted successfully', 'success');
+            }
+        }
+
+        // Initialize admin homepage
+        function initializeAdminHomepage() {
+            loadPostsFeed();
+            
+            // Add event listener for audience change
+            const audienceSelect = document.getElementById('postAudience');
+            if (audienceSelect) {
+                audienceSelect.addEventListener('change', handleAudienceChange);
+            }
+        }
+
+        // Initialize when admin dashboard loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if we're on admin dashboard and initialize
+            if (document.getElementById('admin-homepage')) {
+                initializeAdminHomepage();
+            }
+        });
+    </script>
     <script src="script.js"></script>
 </body>
 </html>
