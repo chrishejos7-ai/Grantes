@@ -12,9 +12,22 @@ body {
     background-color: #f5f7fa;
 }
 
+/* Theme variables */
+:root {
+    --primary: #667eea;
+    --primary-2: #764ba2;
+    --text: #111827;
+    --muted: #6b7280;
+    --card-bg: #ffffff;
+    --card-border: #e5e7eb;
+    --shadow: rgba(0,0,0,0.08);
+    --danger: #dc3545;
+}
+
 /* Navigation */
 .navbar {
-    background: linear-gradient(135deg, #244cfd 0%, #244cfd 100%);
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
     color: rgb(255, 255, 255);
     padding: 1rem 0;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -50,7 +63,7 @@ body {
 }
 
 .nav-link {
-    color: white;
+    color: rgb(34, 34, 36);
     text-decoration: none;
     padding: 0.5rem 1rem;
     border-radius: 5px;
@@ -77,6 +90,14 @@ body {
 .section.active {
     display: block;
 }
+
+/* Ensure only the active admin tab panel is visible */
+#admin-dashboard .tab-content .tab-panel { display: none; }
+#admin-dashboard .tab-content .tab-panel.active { display: block; }
+
+/* Ensure only the active student tab panel is visible */
+#student-homepage .tab-content .tab-panel { display: none; }
+#student-homepage .tab-content .tab-panel.active { display: block; }
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
@@ -124,8 +145,6 @@ body {
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
-
-/
 
 /* Authentication */
 .auth-container {
@@ -1403,7 +1422,7 @@ body {
     border: 1px solid #e9edf3;
     border-radius: 14px;
     padding: 1.25rem 1.25rem 1rem;
-    margin-bottom: 1rem;
+    margin: 0.75rem;
     transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
     position: relative;
 }
@@ -1524,9 +1543,154 @@ body {
     gap: 0.5rem;
 }
 
+/* Students list card enhancements moved from inline styles */
+.student-item {
+    border-radius: 12px;
+    padding: 1rem 1rem 0.75rem;
+    margin: 0.75rem;
+    background: linear-gradient(#ffffff, #ffffff) padding-box,
+                linear-gradient(135deg, var(--primary), var(--primary-2)) border-box;
+    border: 1px solid transparent;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    transition: box-shadow 0.2s ease, transform 0.08s ease, background 0.2s ease;
+}
+
+.student-item:hover {
+    box-shadow: 0 8px 22px rgba(0,0,0,0.10);
+    transform: translateY(-2px);
+}
+
+.student-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+}
+
+.student-header h4 {
+    margin: 0;
+    color: var(--text);
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+}
+.student-header h4::before {
+    content: "";
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+    background: linear-gradient(135deg, var(--primary), var(--primary-2));
+    box-shadow: 0 4px 10px rgba(102,126,234,0.3);
+    vertical-align: -6px;
+}
+/* index badge inside student header */
+.student-header .student-index {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    margin-right: 0.5rem;
+    border-radius: 9999px;
+    background: #fff;
+    border: 2px solid rgba(102,126,234,0.35);
+    color: var(--text);
+    font-weight: 800;
+    font-size: 0.85rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+.student-info {
+    padding: 0.25rem 0 0.75rem;
+}
+
+.student-info .info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.student-info .info-label {
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.student-info .info-value {
+    background: #f3f4f6;
+    color: var(--text);
+    padding: 0.15rem 0.5rem;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    border: 1px solid #e5e7eb;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+}
+
+.student-actions {
+    padding-top: 0.75rem;
+    border-top: 1px solid #f3f4f6;
+}
+
+.student-actions .btn {
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.student-actions .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+}
+
+.student-actions .btn:active {
+    transform: translateY(0);
+}
+
+@media (max-width: 640px) {
+    .student-item { margin: 0.75rem 0.5rem; }
+    .student-actions { flex-direction: column; }
+    .student-actions .btn { width: 100%; }
+}
+
 .application-actions .btn,
 .student-actions .btn {
     min-width: 120px;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+/* Elevate action buttons and colorize secondary within student cards */
+.student-actions .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 16px var(--shadow);
+}
+
+.student-actions .btn:active {
+    transform: translateY(0);
+}
+
+.student-actions .btn-secondary {
+    background: linear-gradient(135deg, var(--primary), var(--primary-2));
+    box-shadow: 0 6px 16px rgba(102,126,234,0.25);
+}
+
+.student-actions .btn-secondary:hover {
+    box-shadow: 0 10px 22px rgba(102,126,234,0.35);
+}
+
+.student-actions .btn-danger {
+    background: linear-gradient(135deg, #e53935, #d32f2f);
+    box-shadow: 0 6px 16px rgba(229,57,53,0.25);
+}
+
+.student-actions .btn-danger:hover {
+    box-shadow: 0 10px 22px rgba(229,57,53,0.35);
 }
 
 /* Tighter info item aesthetics */
@@ -1706,13 +1870,97 @@ body {
 
 /* Admin Student Profile Modal */
 .admin-student-modal {
-    max-width: 700px;
+    max-width: 1100px;
 }
 
 .admin-student-profile {
     display: grid;
     grid-template-columns: 300px 1fr;
     gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+    .admin-student-profile {
+        grid-template-columns: 360px 1fr;
+        gap: 2rem;
+    }
+}
+
+@media (min-width: 1280px) {
+    .admin-student-profile {
+        grid-template-columns: 420px 1fr;
+    }
+}
+
+/* Admin Student Modal - Styled Header */
+.admin-student-modal .modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    border-bottom: none;
+    box-shadow: 0 4px 14px rgba(102,126,234,0.25);
+}
+
+.admin-student-modal .modal-header .close {
+    color: #fff;
+    opacity: 0.9;
+}
+
+.admin-student-modal .modal-header .close:hover {
+    color: #fff;
+    opacity: 1;
+}
+
+/* Admin Student Photo Card Enhancements */
+.admin-student-photo {
+    background: linear-gradient(180deg, #f7f9ff, #ffffff);
+    border-color: #e0e7ff;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+}
+
+.admin-student-photo img {
+    border-radius: 8px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+}
+
+/* Admin Student Name Accent */
+.admin-student-name {
+    position: relative;
+    letter-spacing: 0.2px;
+}
+
+.admin-student-name::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -8px;
+    width: 90px;
+    height: 3px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #244cfd, #ffaa00);
+    opacity: 0.85;
+}
+
+/* Status badge style within admin profile */
+#adminStudentStatus {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    background: #eef2ff;
+    color: #4f46e5;
+    border: 1px solid #e0e7ff;
+}
+
+/* Admin Student Tiles - hover and depth */
+.admin-student-tile {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.admin-student-tile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+    border-color: #dfe6f2;
 }
 
 .admin-student-left {
@@ -1876,6 +2124,11 @@ body {
     font-style: italic;
     padding: 2rem;
 }
+
+/* Hide Applications section per request */
+.quick-action-btn.view-applications { display: none !important; }
+.admin-nav-tabs .nav-tab-btn[onclick*="applications"] { display: none !important; }
+#applications-tab { display: none !important; }
 
 .text-center {
     text-align: center;
@@ -2175,3 +2428,22 @@ body {
         padding: 1rem;
     }
 }
+
+@keyframes cardIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.students-list .student-item { animation: cardIn 0.35s ease both; }
+.students-list .student-item:nth-child(1) { animation-delay: 0.02s; }
+.students-list .student-item:nth-child(2) { animation-delay: 0.05s; }
+.students-list .student-item:nth-child(3) { animation-delay: 0.08s; }
+.students-list .student-item:nth-child(4) { animation-delay: 0.11s; }
+.students-list .student-item:nth-child(5) { animation-delay: 0.14s; }
+
+.students-list::-webkit-scrollbar { width: 10px; }
+.students-list::-webkit-scrollbar-track { background: #f3f4f6; border-radius: 8px; }
+.students-list::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--primary), var(--primary-2));
+    border-radius: 8px;
+}
+.students-list::-webkit-scrollbar-thumb:hover { filter: brightness(1.05); }
