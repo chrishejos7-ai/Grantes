@@ -14,7 +14,7 @@ let unreadMessageCount = 0;
 
 // Persist chat to localStorage so admin messages appear for students later
 function loadPersistedChatMessages() {
-    try {s
+    try {
         const stored = localStorage.getItem('chatMessages');
         if (stored) {
             const parsed = JSON.parse(stored);
@@ -50,9 +50,38 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeApp() {
-    // Load sample data
-    students = [...sampleStudents];
-    applications = [...sampleApplications];
+    // Load data from localStorage first, fallback to empty arrays
+    const savedStudents = localStorage.getItem('students');
+    const savedApplications = localStorage.getItem('applications');
+    
+    if (savedStudents) {
+        students = JSON.parse(savedStudents);
+        console.log('Loaded students from localStorage:', students);
+    } else {
+        students = []; // Start with empty array - no sample data
+        localStorage.setItem('students', JSON.stringify(students));
+        console.log('Initialized with empty students array');
+    }
+    
+    if (savedApplications) {
+        applications = JSON.parse(savedApplications);
+        // Cleanup: remove legacy sample applications (with firstName/lastName fields)
+        try {
+            const cleanedApplications = applications.filter(app => app && (
+                (typeof app.studentId !== 'undefined' && (app.documentType || app.documentFiles))
+            ));
+            if (cleanedApplications.length !== applications.length) {
+                applications = cleanedApplications;
+                localStorage.setItem('applications', JSON.stringify(applications));
+            }
+        } catch (e) {
+            // ignore cleanup errors
+        }
+    } else {
+        applications = []; // Start with empty array
+        localStorage.setItem('applications', JSON.stringify(applications));
+    }
+    
     loadPersistedChatMessages();
     
     // Check if user is already logged in
@@ -183,6 +212,8 @@ function handleLogin(event) {
     const email = (emailRaw || '').trim().toLowerCase();
     const password = (passwordRaw || '').trim();
     
+    console.log('Login attempt:', { role, email, password });
+    
     // First, accept admin credentials regardless of selected role to avoid UX issues
     if ((email === 'admin@grantes.com' || email === 'admin@grantes.local') && password === 'admin123') {
         currentUser = {
@@ -284,6 +315,11 @@ function loadStudentHomepage() {
     
     // Load messages
     loadStudentMessages();
+    // Make counters open Messages tab
+    const msgCountEl = document.getElementById('studentMessageCount');
+    if (msgCountEl) { msgCountEl.style.cursor = 'pointer'; msgCountEl.onclick = () => showStudentTab('messages'); }
+    const notifCountEl = document.getElementById('studentNotificationCount');
+    if (notifCountEl) { notifCountEl.style.cursor = 'pointer'; notifCountEl.onclick = () => showStudentTab('messages'); }
     
     // Initialize chat
     initializeChat();
@@ -299,9 +335,17 @@ function loadStudentProfile() {
     document.getElementById('profileCourse').textContent = student.course;
     document.getElementById('profileYear').textContent = student.year;
     document.getElementById('profileAwardNumber').textContent = student.awardNumber || 'Not assigned';
-    document.getElementById('profileStatus').textContent = 
-        student.applicationStatus === 'none' ? 'Not Submitted' : 
-        student.applicationStatus.charAt(0).toUpperCase() + student.applicationStatus.slice(1);
+    const statusEl = document.getElementById('profileStatus');
+    if (statusEl) {
+        const flags = [];
+        if (student.isIndigenous) flags.push('INDIGENOUS PEOPLE');
+        if (student.isPwd) flags.push("PWD's");
+        statusEl.textContent = flags.length ? flags.join(', ') : '—';
+    }
+    const indigenousEl = document.getElementById('profileIndigenous');
+    const pwdEl = document.getElementById('profilePwd');
+    if (indigenousEl) indigenousEl.textContent = student.isIndigenous ? 'Yes' : 'No';
+    if (pwdEl) pwdEl.textContent = student.isPwd ? 'Yes' : 'No';
 }
 
 function loadStudentAnnouncements() {
@@ -362,11 +406,33 @@ function loadStudentAnnouncements() {
 }
 
 function loadStudentMessages() {
-    const studentMessages = JSON.parse(localStorage.getItem('studentMessages') || '[]');
+    // Use shared chatMessages thread persisted in localStorage; migrate legacy records if present
+    loadPersistedChatMessages();
     const student = currentUser.studentData;
-    const studentThread = studentMessages.filter(m => m.studentId === student.id);
+    try {
+        const legacy = JSON.parse(localStorage.getItem('studentMessages') || '[]');
+        if (Array.isArray(legacy) && legacy.some(m => m && m.studentId === student.id)) {
+            const existingKeys = new Set(chatMessages.map(m => `${m.studentId}|${m.timestamp}|${m.sender}|${m.text}`));
+            legacy.forEach(m => {
+                if (!m || m.studentId !== student.id) return;
+                const key = `${m.studentId}|${m.timestamp}|${m.sender}|${m.text}`;
+                if (!existingKeys.has(key)) {
+                    chatMessages.push({
+                        id: m.id || Date.now(),
+                        text: m.text || '',
+                        sender: m.sender || 'student',
+                        timestamp: m.timestamp || new Date().toISOString(),
+                        studentId: m.studentId
+                    });
+                }
+            });
+            persistChatMessages();
+        }
+    } catch (_) { /* ignore */ }
+
+    const studentThread = chatMessages.filter(m => m.studentId === student.id);
     const container = document.getElementById('studentChatMessages');
-    
+    if (!container) return;
     if (studentThread.length === 0) {
         container.innerHTML = `
             <div class="no-messages">
@@ -377,20 +443,19 @@ function loadStudentMessages() {
         `;
         return;
     }
-
-    container.innerHTML = studentThread.map(message => `
-        <div class="message-item ${message.sender === 'student' ? 'sent' : 'received'}">
-            <div class="message-avatar">
-                ${message.sender === 'student' ? 'S' : 'A'}
+    container.innerHTML = studentThread.map(message => {
+        const isStudent = message.sender !== 'admin';
+        const time = new Date(message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        return `
+            <div class="message-item ${isStudent ? 'sent' : 'received'}">
+                <div class="message-avatar">${isStudent ? 'S' : 'A'}</div>
+                <div class="message-bubble">
+                    <div class="message-text">${message.text || ''}</div>
+                    <div class="message-time">${time}</div>
+                </div>
             </div>
-            <div class="message-bubble">
-                <div class="message-text">${message.text}</div>
-                <div class="message-time">${formatTime(message.timestamp)}</div>
-            </div>
-        </div>
-    `).join('');
-
-    // Scroll to bottom
+        `;
+    }).join('');
     container.scrollTop = container.scrollHeight;
 }
 
@@ -505,31 +570,22 @@ function submitApplication(event) {
     loadStudentDashboard();
 }
 
-// Student Tab Functions
-function showStudentTab(tabName) {
-    // Update tab buttons
-    document.querySelectorAll('#student-dashboard .tab-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
-    
-    // Update tab panels
-    document.querySelectorAll('#student-dashboard .tab-panel').forEach(panel => panel.classList.remove('active'));
-    document.getElementById(`${tabName}-tab`).classList.add('active');
-}
+// (Removed legacy showStudentTab for #student-dashboard to avoid conflicts)
 
 // Admin Dashboard Functions
 function loadAdminDashboard() {
-    // Load students from localStorage (including admin-created ones)
-    const allStudents = JSON.parse(localStorage.getItem('students') || '[]');
-    const combinedStudents = [...students, ...allStudents];
+    // Load students from localStorage as single source of truth
+    const storedStudents = JSON.parse(localStorage.getItem('students') || '[]');
+    students = storedStudents;
     
-    // Update stats
-    document.getElementById('totalStudents').textContent = combinedStudents.length;
+    // Update stats (map: Indigenous -> isIndigenous, PWD's -> isPwd)
+    document.getElementById('totalStudents').textContent = students.length;
     document.getElementById('totalApproved').textContent = 
-        combinedStudents.filter(s => s.applicationStatus === 'approved').length;
+        students.filter(s => s.isIndigenous).length;
     document.getElementById('totalPending').textContent = 
-        combinedStudents.filter(s => s.applicationStatus === 'pending').length;
+        students.filter(s => s.isPwd).length;
     document.getElementById('totalArchived').textContent = 
-        combinedStudents.filter(s => s.status === 'archived').length;
+        students.filter(s => s.status === 'archived').length;
     
     // Show admin homepage by default
     const adminHomepage = document.getElementById('admin-homepage');
@@ -552,7 +608,7 @@ function loadAdminDashboard() {
 
 function loadApplications() {
     const container = document.getElementById('applicationsContainer');
-    const filteredApplications = filterApplicationsByStatus();
+    const filteredApplications = filterApplicationsByStatus().filter(app => app && app.documentType);
     
     if (filteredApplications.length === 0) {
         container.innerHTML = '<p class="no-data">No applications found.</p>';
@@ -560,7 +616,7 @@ function loadApplications() {
     }
     
     container.innerHTML = filteredApplications.map(app => {
-        const student = students.find(s => s.id === app.studentId);
+        const student = students.find(s => s.id === app.studentId) || { firstName: '', lastName: '', studentId: '' };
         return `
             <div class="application-item">
                 <div class="application-header">
@@ -605,52 +661,23 @@ function loadStudents() {
         return;
     }
     
-    container.innerHTML = filteredStudents.map(student => {
+    container.innerHTML = filteredStudents.map((student, index) => {
         return `
             <div class="student-item">
                 <div class="student-header">
-                    <h4>${student.firstName} ${student.lastName}</h4>
-                    <span class="status-badge status-${student.status}">${student.status}</span>
+                    <h4><span class="student-index">${index + 1}</span>${student.firstName} ${student.lastName}</h4>
                 </div>
                 <div class="student-info">
                     <div class="info-item">
                         <span class="info-label">Student ID</span>
-                        <span class="info-value">${student.studentId}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Email</span>
-                        <span class="info-value">${student.email}</span>
-                    </div>
-                    ${student.awardNumber ? `
-                    <div class="info-item">
-                        <span class="info-label">Award Number</span>
-                        <span class="info-value">${student.awardNumber}</span>
-                    </div>
-                    ` : ''}
-                    <div class="info-item">
-                        <span class="info-label">Course</span>
-                        <span class="info-value">${student.course}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Year</span>
-                        <span class="info-value">${student.year}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Application Status</span>
-                        <span class="info-value">${student.applicationStatus}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Registration Date</span>
-                        <span class="info-value">${formatDate(student.registrationDate)}</span>
+                        <span class="info-value">${student.studentId || 'N/A'}</span>
                     </div>
                 </div>
                 <div class="student-actions">
-                    <button class="btn btn-primary" onclick="sendMessageToStudent(${student.id})">Send Message</button>
                     <button class="btn btn-secondary" onclick="openStudentProfileModal(${student.id})">View Profile</button>
-                    ${student.status === 'active' ? 
-                        `<button class="btn btn-secondary" onclick="archiveStudent(${student.id})">Archive</button>` : 
-                        `<button class="btn btn-success" onclick="activateStudent(${student.id})">Activate</button>`
-                    }
+                    <button class="btn btn-secondary" onclick="editStudent(${student.id})">Edit</button>
+                    <button class="btn btn-secondary" onclick="archiveStudent(${student.id})">Archive</button>
+                    <button class="btn btn-danger" onclick="deleteStudent(${student.id})">Delete</button>
                 </div>
             </div>
         `;
@@ -682,6 +709,15 @@ function showAdminTab(tabName) {
     // Load tab-specific content
     if (tabName === 'reports') {
         loadReports();
+    }
+}
+
+// Quick action: show only the Students list and hide the tab bar
+function openManageStudents() {
+    showAdminTab('students');
+    const navTabs = document.querySelector('.admin-nav-tabs');
+    if (navTabs) {
+        navTabs.style.display = 'none';
     }
 }
 
@@ -828,12 +864,18 @@ function openStudentProfileModal(studentId) {
 
     document.getElementById('adminStudentName').textContent = `${student.firstName} ${student.lastName}`;
     document.getElementById('adminStudentEmail').textContent = student.email;
-    document.getElementById('adminStudentId').textContent = student.studentId;
+    // Keep the header meta showing the correct Student ID (not award number)
+    document.getElementById('adminStudentId').textContent = student.studentId || '';
     document.getElementById('adminStudentCourse').textContent = student.course;
     document.getElementById('adminStudentYear').textContent = student.year;
+    const adminStudentIdValueEl = document.getElementById('adminStudentIdValue');
+    if (adminStudentIdValueEl) { adminStudentIdValueEl.textContent = student.studentId; }
+    const adminStudentAwardNumberEl = document.getElementById('adminStudentAwardNumber');
+    if (adminStudentAwardNumberEl) { adminStudentAwardNumberEl.textContent = student.awardNumber || 'N/A'; }
     document.getElementById('adminStudentStatus').textContent = student.status;
-    document.getElementById('adminStudentAppStatus').textContent = student.applicationStatus;
-    document.getElementById('adminStudentRegistered').textContent = formatDate(student.registrationDate);
+    // Application status removed from admin view
+    const registeredValue = student.registered || student.registrationDate || student.registeredDate || null;
+    document.getElementById('adminStudentRegistered').textContent = registeredValue ? formatDate(registeredValue) : 'N/A';
 
     const img = document.getElementById('adminStudentPhoto');
     if (img) {
@@ -844,6 +886,12 @@ function openStudentProfileModal(studentId) {
             img.alt = 'No ID Picture available';
         }
     }
+
+    // Show flags in admin view if needed
+    const indigenousBadge = document.getElementById('adminStudentIndigenous');
+    const pwdBadge = document.getElementById('adminStudentPwd');
+    if (indigenousBadge) indigenousBadge.textContent = student.isIndigenous ? 'Yes' : 'No';
+    if (pwdBadge) pwdBadge.textContent = student.isPwd ? 'Yes' : 'No';
 
     // Load admin-student chat thread for this student
     adminActiveChatStudentId = studentId;
@@ -954,6 +1002,25 @@ function activateStudent(studentId) {
     showToast('Student activated successfully!', 'success');
 }
 
+function deleteStudent(studentId) {
+    if (!confirm('Are you sure you want to permanently delete this student?')) return;
+    // Reload latest
+    const stored = JSON.parse(localStorage.getItem('students') || '[]');
+    const newList = stored.filter(s => s.id !== studentId);
+    localStorage.setItem('students', JSON.stringify(newList));
+    students = newList;
+    // Remove related chat messages
+    try {
+        loadPersistedChatMessages();
+        const filteredMsgs = chatMessages.filter(m => m.studentId !== studentId);
+        chatMessages = filteredMsgs;
+        persistChatMessages();
+    } catch (_) { /* ignore */ }
+    loadStudents();
+    loadAdminDashboard();
+    showToast('Student deleted successfully!', 'success');
+}
+
 // Filter Functions
 function filterApplications() {
     loadApplications();
@@ -991,24 +1058,27 @@ function filterStudents() {
 
 function filterStudentsByStatus() {
     const statusFilter = document.getElementById('studentStatusFilter').value;
-    const searchTerm = document.getElementById('searchStudentRecords').value.toLowerCase();
+    const searchTerm = (document.getElementById('searchStudentRecords').value || '').trim().toLowerCase();
     
-    // Load students from localStorage (including admin-created ones)
-    const allStudents = JSON.parse(localStorage.getItem('students') || '[]');
-    const combinedStudents = [...students, ...allStudents];
+    // Load students from localStorage as single source of truth
+    const storedStudents = JSON.parse(localStorage.getItem('students') || '[]');
+    students = storedStudents;
     
-    let filtered = combinedStudents;
+    let filtered = students;
     
     if (statusFilter) {
-        filtered = filtered.filter(student => student.status === statusFilter);
+        filtered = filtered.filter(student => (student.status || 'active') === statusFilter);
     }
     
     if (searchTerm) {
         filtered = filtered.filter(student => 
-            student.firstName.toLowerCase().includes(searchTerm) ||
-            student.lastName.toLowerCase().includes(searchTerm) ||
-            student.studentId.toLowerCase().includes(searchTerm) ||
-            student.email.toLowerCase().includes(searchTerm)
+            (student.firstName || '').toLowerCase().includes(searchTerm) ||
+            (student.lastName || '').toLowerCase().includes(searchTerm) ||
+            (student.studentId || '').toLowerCase().includes(searchTerm) ||
+            (student.email || '').toLowerCase().includes(searchTerm) ||
+            (student.awardNumber || '').toLowerCase().includes(searchTerm) ||
+            (student.course || '').toLowerCase().includes(searchTerm) ||
+            (student.year || '').toLowerCase().includes(searchTerm)
         );
     }
     
@@ -1649,8 +1719,14 @@ function showStudentTab(tabName) {
     // Show selected tab panel
     document.getElementById(`${tabName}-tab`).classList.add('active');
     
-    // Add active class to clicked tab button
-    event.target.classList.add('active');
+    // Add active class to clicked tab button (only if called from a click)
+    if (typeof event !== 'undefined' && event && event.target) {
+        event.target.classList.add('active');
+    } else {
+        // If called programmatically, set active on the correct nav button
+        const btn = document.querySelector(`#student-homepage .nav-tab-btn[onclick*="'${tabName}'"]`);
+        if (btn) btn.classList.add('active');
+    }
     
     // Load specific content based on tab
     switch(tabName) {
@@ -1658,7 +1734,8 @@ function showStudentTab(tabName) {
             loadStudentAnnouncements();
             break;
         case 'messages':
-            loadStudentMessages();
+            // Defer to ensure panel is visible before rendering
+            setTimeout(loadStudentMessages, 0);
             break;
         case 'profile':
             loadStudentProfile();
@@ -1673,6 +1750,7 @@ function sendMessage() {
     
     if (!text) return;
 
+    // Push into shared chatMessages and persist
     const message = {
         id: Date.now(),
         sender: 'student',
@@ -1680,44 +1758,13 @@ function sendMessage() {
         timestamp: new Date().toISOString(),
         studentId: currentUser.studentData.id
     };
-
-    const studentMessages = JSON.parse(localStorage.getItem('studentMessages') || '[]');
-    studentMessages.push(message);
-    localStorage.setItem('studentMessages', JSON.stringify(studentMessages));
-    
+    chatMessages.push(message);
+    persistChatMessages();
     input.value = '';
     loadStudentMessages();
-    
-    // Simulate admin response (in real app, this would be handled by server)
-    setTimeout(() => {
-        simulateAdminResponse();
-    }, 2000);
 }
 
-function simulateAdminResponse() {
-    const responses = [
-        "Thank you for your message. We'll get back to you soon.",
-        "We've received your inquiry and will review it shortly.",
-        "Thanks for reaching out! Is there anything specific we can help you with?",
-        "We appreciate your message. Our team will respond within 24 hours.",
-        "Hello! How can we assist you today?"
-    ];
-
-    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-    
-    const adminMessage = {
-        id: Date.now(),
-        sender: 'admin',
-        text: randomResponse,
-        timestamp: new Date().toISOString(),
-        studentId: currentUser.studentData.id
-    };
-
-    const studentMessages = JSON.parse(localStorage.getItem('studentMessages') || '[]');
-    studentMessages.push(adminMessage);
-    localStorage.setItem('studentMessages', JSON.stringify(studentMessages));
-    loadStudentMessages();
-}
+// simulateAdminResponse removed in favor of shared chatMessages
 
 function handleChatKeyPress(event) {
     if (event.key === 'Enter') {
@@ -1796,3 +1843,410 @@ function renderComments(comments) {
         </div>
     `).join('');
 }
+
+// Student Registration Modal Functions
+function openStudentRegistrationModal() {
+    document.getElementById('studentRegistrationModal').style.display = 'block';
+    // Clear form
+    document.getElementById('studentRegistrationForm').reset();
+}
+
+function closeStudentRegistrationModal() {
+    document.getElementById('studentRegistrationModal').style.display = 'none';
+}
+
+function handleStudentRegistration(event) {
+    event.preventDefault();
+    
+    const firstName = (document.getElementById('adminFirstName').value || '').trim();
+    const lastName = (document.getElementById('adminLastName').value || '').trim();
+    const studentId = (document.getElementById('adminStudentIdInput').value || '').trim();
+    const email = (document.getElementById('adminEmail').value || '').trim();
+    const awardNumber = (document.getElementById('adminAwardNumber').value || '').trim();
+    const password = document.getElementById('adminPassword').value;
+    const confirmPassword = document.getElementById('adminConfirmPassword').value;
+    const course = (document.getElementById('adminCourse').value || '').trim();
+    const year = (document.getElementById('adminYear').value || '').trim();
+    const photoFile = document.getElementById('adminPhoto') ? document.getElementById('adminPhoto').files[0] : null;
+    const isIndigenous = document.getElementById('adminIsIndigenous') ? document.getElementById('adminIsIndigenous').checked : false;
+    const isPwd = document.getElementById('adminIsPwd') ? document.getElementById('adminIsPwd').checked : false;
+    
+    // Basic required validation
+    if (!firstName || !lastName || !studentId || !email || !awardNumber || !course || !year) {
+        showToast('Please complete all required fields', 'error');
+        return;
+    }
+    // Validate passwords match
+    if (password !== confirmPassword) {
+        showToast('Passwords do not match!', 'error');
+        return;
+    }
+    
+    // Load latest students data from localStorage
+    const savedStudents = localStorage.getItem('students');
+    if (savedStudents) {
+        students = JSON.parse(savedStudents);
+    }
+
+    // Uniqueness validation (field-specific, ignore empty existing fields)
+    const norm = (v) => (v || '').trim().toLowerCase();
+    const existsStudentId = students.some(s => (s.studentId && norm(s.studentId) === norm(studentId)));
+    const existsEmail = students.some(s => (s.email && norm(s.email) === norm(email)));
+    const existsAward = students.some(s => (s.awardNumber && norm(s.awardNumber) === norm(awardNumber)));
+    if (existsStudentId || existsEmail || existsAward) {
+        let msg = 'Duplicate found:';
+        const parts = [];
+        if (existsStudentId) parts.push('Student ID');
+        if (existsEmail) parts.push('Email');
+        if (existsAward) parts.push('Award Number');
+        showToast(`${msg} ${parts.join(', ')} already exists`, 'error');
+        return;
+    }
+    
+    // Helper to finalize save after optional image processing
+    const finalizeSave = (idPictureDataUrl) => {
+        // Create new student with unique ID
+        const newStudent = {
+            id: students.length > 0 ? Math.max(...students.map(s => s.id)) + 1 : 1,
+            firstName: firstName,
+            lastName: lastName,
+            studentId: studentId,
+            email: email,
+            awardNumber: awardNumber,
+            password: password,
+            course: course,
+            year: year,
+            status: 'active',
+            applicationStatus: 'none',
+            registered: new Date().toISOString(),
+            role: 'student',
+            idPictureDataUrl: idPictureDataUrl || null,
+            isIndigenous: isIndigenous,
+            isPwd: isPwd
+        };
+        
+        students.push(newStudent);
+        localStorage.setItem('students', JSON.stringify(students));
+        
+        closeStudentRegistrationModal();
+        showToast('Student registered successfully!', 'success');
+        showAdminTab('students');
+    };
+
+    if (photoFile) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            finalizeSave(e.target.result);
+        };
+        reader.readAsDataURL(photoFile);
+    } else {
+        finalizeSave(null);
+    }
+}
+
+// Bulk Registration Modal Functions
+function openBulkRegistrationModal() {
+    document.getElementById('bulkRegistrationModal').style.display = 'block';
+    // Reset to step 1
+    document.getElementById('bulkStep1').classList.add('active');
+    document.getElementById('bulkStep2').classList.remove('active');
+    document.getElementById('fileInfo').style.display = 'none';
+    document.getElementById('processFileBtn').disabled = true;
+}
+
+function closeBulkRegistrationModal() {
+    document.getElementById('bulkRegistrationModal').style.display = 'none';
+}
+
+// Admin Tab Navigation
+function showAdminTab(tabName) {
+    // Scope to admin dashboard only
+    const adminSection = document.getElementById('admin-dashboard');
+    const homepageContent = document.getElementById('admin-homepage');
+    const tabContent = adminSection ? adminSection.querySelector('.tab-content') : null;
+    const navTabs = adminSection ? adminSection.querySelector('.admin-nav-tabs') : null;
+    
+    if (!adminSection || !homepageContent || !tabContent || !navTabs) {
+        return;
+    }
+    
+    if (tabName === 'homepage') {
+        homepageContent.style.display = 'block';
+        tabContent.style.display = 'none';
+        navTabs.style.display = 'none';
+        return;
+    }
+    
+    // Show tab content within admin section
+    homepageContent.style.display = 'none';
+    tabContent.style.display = 'block';
+    navTabs.style.display = 'flex';
+    
+    // Hide all admin tab panels and deactivate tab buttons
+    adminSection.querySelectorAll('.tab-panel').forEach(panel => {
+        panel.classList.remove('active');
+    });
+    adminSection.querySelectorAll('.nav-tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Activate selected tab panel
+    const targetPanel = document.getElementById(`${tabName}-tab`);
+    if (targetPanel) {
+        targetPanel.classList.add('active');
+    }
+    
+    // Mark clicked button active if this came from a click
+    if (typeof event !== 'undefined' && event && event.target) {
+        event.target.classList.add('active');
+    }
+    
+    // Load content
+    switch(tabName) {
+        case 'applications':
+            loadApplications();
+            break;
+        case 'students':
+            loadStudents();
+            break;
+        case 'reports':
+            loadReports();
+            break;
+        case 'settings':
+            loadSettings();
+            break;
+    }
+}
+
+// Load Applications Tab
+function loadApplications() {
+    const container = document.getElementById('applicationsContainer');
+    
+    if (applications.length === 0) {
+        container.innerHTML = '<p class="no-data">No applications found.</p>';
+        return;
+    }
+    
+    const applicationsHTML = applications.map(app => `
+        <div class="application-item">
+            <div class="application-header">
+                <h4>${app.firstName} ${app.lastName}</h4>
+                <span class="status-badge status-${app.status}">${app.status.toUpperCase()}</span>
+            </div>
+            <div class="application-info">
+                <div class="info-item">
+                    <span class="info-label">Student ID:</span>
+                    <span class="info-value">${app.studentId}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Email:</span>
+                    <span class="info-value">${app.email}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Course:</span>
+                    <span class="info-value">${app.course}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Year:</span>
+                    <span class="info-value">${app.year}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Applied:</span>
+                    <span class="info-value">${formatDate(app.appliedDate)}</span>
+                </div>
+            </div>
+            <div class="application-actions">
+                <button class="btn btn-primary" onclick="reviewApplication(${app.id})">Review</button>
+                <button class="btn btn-success" onclick="updateApplicationStatus(${app.id}, 'approved')">Approve</button>
+                <button class="btn btn-danger" onclick="updateApplicationStatus(${app.id}, 'rejected')">Reject</button>
+            </div>
+        </div>
+    `).join('');
+    
+    container.innerHTML = applicationsHTML;
+}
+
+// Load Students Tab
+function loadStudents() {
+    const container = document.getElementById('studentsContainer');
+    if (!container) {
+        console.log('studentsContainer not found!');
+        return;
+    }
+    // Remove legacy fallback that mirrored awardNumber into studentId to avoid confusion
+    const filteredStudents = filterStudentsByStatus();
+    if (filteredStudents.length === 0) {
+        container.innerHTML = '<p class="no-data">No students found.</p>';
+        return;
+    }
+    container.innerHTML = filteredStudents.map((student, index) => {
+        const safeStatus = (student.status || 'active').toLowerCase();
+        return `
+            <div class="student-item">
+                <div class="student-header">
+                    <h4><span class="student-index">${index + 1}</span>${student.firstName || ''} ${student.lastName || ''}</h4>
+                </div>
+                <div class="student-info">
+                    <div class="info-item">
+                        <span class="info-label">Student ID</span>
+                        <span class="info-value">${student.studentId || 'N/A'}</span>
+                    </div>
+                </div>
+                <div class="student-actions">
+                    <button class="btn btn-secondary" onclick="openStudentProfileModal(${student.id})">View Profile</button>
+                    <button class="btn btn-secondary" onclick="editStudent(${student.id})">Edit</button>
+                    <button class="btn btn-secondary" onclick="archiveStudent(${student.id})">Archive</button>
+                    <button class="btn btn-danger" onclick="deleteStudent(${student.id})">Delete</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Load Reports Tab
+function loadReports() {
+    // This would load charts and reports
+    showToast('Reports loaded successfully!', 'success');
+}
+
+// Load Settings Tab
+function loadSettings() {
+    // This would load system settings
+    showToast('Settings loaded successfully!', 'success');
+}
+
+// Student Management Functions
+function viewStudentProfile(studentId) {
+    const student = students.find(s => s.id === studentId);
+    if (!student) return;
+    
+    // Populate modal with student data
+    document.getElementById('adminStudentName').textContent = `${student.firstName} ${student.lastName}`;
+    document.getElementById('adminStudentEmail').textContent = student.email;
+    document.getElementById('adminStudentId').textContent = student.studentId;
+    document.getElementById('adminStudentCourse').textContent = student.course;
+    document.getElementById('adminStudentYear').textContent = student.year;
+    document.getElementById('adminStudentStatus').textContent = student.status;
+    document.getElementById('adminStudentAppStatus').textContent = student.applicationStatus || 'N/A';
+    document.getElementById('adminStudentRegistered').textContent = formatDate(student.registered);
+    
+    // Set student ID picture if available
+    const img = document.getElementById('adminStudentPhoto');
+    if (img) {
+        if (student.idPictureDataUrl) {
+            img.src = student.idPictureDataUrl;
+            img.alt = 'Student ID Picture';
+        } else {
+            img.src = '';
+            img.alt = 'No ID Picture available';
+        }
+    }
+    
+    // Show modal
+    document.getElementById('studentProfileModal').style.display = 'block';
+}
+
+function closeStudentProfileModal() {
+    document.getElementById('studentProfileModal').style.display = 'none';
+}
+
+function editStudent(studentId) {
+    showToast('Edit student functionality coming soon!', 'info');
+}
+
+function archiveStudent(studentId) {
+    if (confirm('Are you sure you want to archive this student?')) {
+        const student = students.find(s => s.id === studentId);
+        if (student) {
+            student.status = 'archived';
+            localStorage.setItem('students', JSON.stringify(students));
+            loadStudents();
+            showToast('Student archived successfully!', 'success');
+        }
+    }
+}
+
+// Application Management Functions
+function reviewApplication(applicationId) {
+    const application = applications.find(app => app.id === applicationId);
+    if (!application) return;
+    
+    currentApplicationId = applicationId;
+    
+    // Populate modal with application details
+    const detailsContainer = document.getElementById('applicationDetails');
+    detailsContainer.innerHTML = `
+        <div class="application-details">
+            <h4>Application Details</h4>
+            <div class="detail-row">
+                <strong>Name:</strong>
+                <span>${application.firstName} ${application.lastName}</span>
+            </div>
+            <div class="detail-row">
+                <strong>Student ID:</strong>
+                <span>${application.studentId}</span>
+            </div>
+            <div class="detail-row">
+                <strong>Email:</strong>
+                <span>${application.email}</span>
+            </div>
+            <div class="detail-row">
+                <strong>Course:</strong>
+                <span>${application.course}</span>
+            </div>
+            <div class="detail-row">
+                <strong>Year Level:</strong>
+                <span>${application.year}</span>
+            </div>
+            <div class="detail-row">
+                <strong>Applied Date:</strong>
+                <span>${formatDate(application.appliedDate)}</span>
+            </div>
+            <div class="detail-row">
+                <strong>Status:</strong>
+                <span class="status-badge status-${application.status}">${application.status.toUpperCase()}</span>
+            </div>
+        </div>
+    `;
+    
+    // Show modal
+    document.getElementById('reviewModal').style.display = 'block';
+}
+
+function updateApplicationStatus(applicationId, status) {
+    const application = applications.find(app => app.id === applicationId);
+    if (!application) return;
+    
+    application.status = status;
+    application.reviewedDate = new Date().toISOString();
+    
+    // Save to localStorage
+    localStorage.setItem('applications', JSON.stringify(applications));
+    
+    // Reload applications
+    loadApplications();
+    
+    // Close modal if open
+    closeModal();
+    
+    // Show success message
+    showToast(`Application ${status} successfully!`, 'success');
+}
+
+// Filter and Search Functions
+function filterApplications() {
+    loadApplications();
+}
+
+function searchApplications() {
+    loadApplications();
+}
+
+function filterStudents() {
+    loadStudents();
+}
+
+function searchStudents() {
+    loadStudents();
+}
+
