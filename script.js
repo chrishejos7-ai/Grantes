@@ -88,6 +88,14 @@ function initializeApp() {
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
         currentUser = JSON.parse(savedUser);
+        if (document && document.body) {
+            document.body.classList.add('logged-in');
+            if (currentUser.role === 'admin') {
+                document.body.classList.add('admin-logged-in');
+            } else {
+                document.body.classList.remove('admin-logged-in');
+            }
+        }
         showDashboard();
     } else {
         showHome();
@@ -102,6 +110,10 @@ function showHome() {
     hideAllSections();
     document.getElementById('home').classList.add('active');
     updateNavigation();
+    // Render home feed posts targeted for Home Page audience
+    if (typeof loadHomeFeed === 'function') {
+        loadHomeFeed();
+    }
 }
 
 function showLogin() {
@@ -140,13 +152,31 @@ function updateNavigation() {
     });
     
     if (currentUser) {
-        document.querySelector('.nav-link[onclick="showHome()"]').style.display = 'none';
-        document.querySelector('.nav-link[onclick="showLogin()"]').style.display = 'none';
-        document.querySelector('.nav-link[onclick="showRegister()"]').style.display = 'none';
+        if (document && document.body) {
+            document.body.classList.add('logged-in');
+            if (currentUser.role === 'admin') {
+                document.body.classList.add('admin-logged-in');
+            } else {
+                document.body.classList.remove('admin-logged-in');
+            }
+        }
+        const homeLink = document.querySelector('.nav-link[onclick="showHome()"]');
+        const loginLink = document.querySelector('.nav-link[onclick="showLogin()"]');
+        const registerLink = document.querySelector('.nav-link[onclick="showRegister()"]');
+        if (homeLink) homeLink.style.display = 'none';
+        if (loginLink) loginLink.style.display = 'none';
+        if (registerLink) registerLink.style.display = 'none';
     } else {
-        document.querySelector('.nav-link[onclick="showHome()"]').style.display = 'block';
-        document.querySelector('.nav-link[onclick="showLogin()"]').style.display = 'block';
-        document.querySelector('.nav-link[onclick="showRegister()"]').style.display = 'block';
+        if (document && document.body) {
+            document.body.classList.remove('logged-in');
+            document.body.classList.remove('admin-logged-in');
+        }
+        const homeLink = document.querySelector('.nav-link[onclick="showHome()"]');
+        const loginLink = document.querySelector('.nav-link[onclick="showLogin()"]');
+        const registerLink = document.querySelector('.nav-link[onclick="showRegister()"]');
+        if (homeLink) homeLink.style.display = 'block';
+        if (loginLink) loginLink.style.display = 'block';
+        if (registerLink) registerLink.style.display = 'block';
     }
 }
 
@@ -203,6 +233,92 @@ function handleRegister(event) {
     showLogin();
 }
 
+// Home Feed: Render admin posts where audience === 'home' in Facebook-like cards
+function loadHomeFeed() {
+    const feedEl = document.getElementById('homeFeed');
+    if (!feedEl) return;
+    // Read from adminPosts; fallback to legacy 'posts' if present, then merge
+    const storedAdminPosts = JSON.parse(localStorage.getItem('adminPosts') || '[]');
+    const legacyPosts = JSON.parse(localStorage.getItem('posts') || '[]');
+    const allPosts = [...storedAdminPosts, ...legacyPosts];
+    // Accept both 'home' and 'Home Page' values (legacy), and be lenient on casing
+    const homePosts = allPosts.filter(p => {
+        if (!p) return false;
+        const audRaw = (p.audience == null ? '' : p.audience).toString().toLowerCase();
+        // Include posts with audience 'home'/'home page' or no audience (legacy)
+        return audRaw === '' || audRaw === 'home' || audRaw === 'home page';
+    }).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    // Fallback: if no Home-specific posts, show latest recent posts so something appears
+    const postsToRender = (homePosts.length > 0 ? homePosts : allPosts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))).slice(0, 10);
+    if (postsToRender.length === 0) {
+        feedEl.innerHTML = `
+            <div class="welcome-message">
+                <h3>No public posts yet</h3>
+                <p>Announcements for the Home Page will appear here.</p>
+            </div>
+        `;
+        return;
+    }
+    feedEl.innerHTML = postsToRender.map(post => {
+        const aud = ((post && post.audience) ? post.audience.toString().toLowerCase() : '');
+        const badgeText = aud === 'students' ? 'GranTES Students' : 'Home Page';
+        const ts = post && post.timestamp ? post.timestamp : new Date().toISOString();
+        const author = (post && post.author) ? post.author : 'Administrator';
+        const content = (post && post.content) ? post.content : '';
+        const hasMulti = Array.isArray(post.images) && post.images.length > 1;
+        const hasSingle = !!post.image;
+        const isTextOnly = !hasMulti && !hasSingle;
+        if (isTextOnly) {
+            return `
+        <div class="post-card product-style text-only">
+            <div class="post-content">
+                <div class="post-hero-text">${content}</div>
+            </div>
+        </div>`;
+        }
+        const imageFirst = (post.layout || 'image-left') === 'image-left';
+        const mediaHtml = (Array.isArray(post.images) && post.images.length > 1)
+            ? renderCarousel(post.images)
+            : (post.image ? `<div class=\"post-image\"><img src=\"${post.image}\" alt=\"post image\"></div>` : '');
+        const detailsHtml = `<div class=\"post-details\">\n                        <div class=\"post-text\">${content}</div>\n                        ${post.type === 'media' ? '<div class=\"post-media\"><i class=\"fas fa-image\"></i> Media attached</div>' : ''}\n                        ${post.type === 'live' ? '<div class=\"post-live\"><i class=\"fas fa-video\"></i> Live video</div>' : ''}\n                        ${post.type === 'feeling' ? '<div class=\"post-feeling\"><i class=\"fas fa-smile\"></i> Feeling/Activity</div>' : ''}\n                    </div>`;
+        return `
+        <div class=\"post-card product-style\">\n            <div class=\"post-content\">\n                <div class=\"post-body ${imageFirst ? 'image-left' : 'image-right'}\">\n                    ${imageFirst ? `${mediaHtml}${detailsHtml}` : `${detailsHtml}${mediaHtml}`}
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// Ensure Home feed renders on initial page load
+document.addEventListener('DOMContentLoaded', function() {
+    try { loadHomeFeed(); } catch (_) { /* ignore */ }
+});
+
+function homeLikePost(postId) {
+    const allPosts = JSON.parse(localStorage.getItem('adminPosts') || '[]');
+    const post = allPosts.find(p => p.id === postId);
+    if (!post) return;
+    post.likes = (post.likes || 0) + 1;
+    localStorage.setItem('adminPosts', JSON.stringify(allPosts));
+    loadHomeFeed();
+}
+
+function homeCommentPost(postId) {
+    const comment = prompt('Add a comment:');
+    if (!comment || !comment.trim()) return;
+    const allPosts = JSON.parse(localStorage.getItem('adminPosts') || '[]');
+    const post = allPosts.find(p => p.id === postId);
+    if (!post) return;
+    if (!Array.isArray(post.comments)) post.comments = [];
+    post.comments.push({ id: Date.now(), author: 'Guest', content: comment.trim(), timestamp: new Date().toISOString() });
+    localStorage.setItem('adminPosts', JSON.stringify(allPosts));
+    loadHomeFeed();
+}
+
+function homeSharePost(postId) {
+    alert('Link copied for sharing!');
+}
+
 function handleLogin(event) {
     event.preventDefault();
     
@@ -222,7 +338,14 @@ function handleLogin(event) {
             email: email,
             role: 'admin'
         };
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        if (!safeSetItem('currentUser', JSON.stringify(currentUser))) {
+            showToast('Storage is full. Logged in without saving session.', 'warning');
+        }
+        if (document && document.body) {
+            document.body.classList.add('logged-in');
+            document.body.classList.add('admin-logged-in');
+        }
+        try { updateNavigation(); } catch (_) { /* ignore */ }
         showToast('Login successful!', 'success');
         showDashboard();
         return;
@@ -238,42 +361,56 @@ function handleLogin(event) {
                 role: 'admin'
             };
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            if (document && document.body) {
+                document.body.classList.add('logged-in');
+                document.body.classList.add('admin-logged-in');
+            }
+            try { updateNavigation(); } catch (_) { /* ignore */ }
             showToast('Login successful!', 'success');
             showDashboard();
         } else {
             showToast('Invalid admin credentials', 'error');
         }
     } else if (role === 'student') {
-        // Student login - check both email and award number
-        const awardNumber = document.getElementById('loginAwardNumber').value.trim();
+        // Student login - accept Award Number OR Student ID (in same input), or email
+        const identifierRaw = document.getElementById('loginAwardNumber').value || '';
+        const identifier = identifierRaw.trim().toLowerCase();
         
-        // Load students from localStorage (including admin-created ones)
-        const allStudents = JSON.parse(localStorage.getItem('students') || '[]');
-        const combinedStudents = [...students, ...allStudents];
+        // Load latest students from localStorage only (single source of truth)
+        const storedStudents = JSON.parse(localStorage.getItem('students') || '[]');
         
-        const student = combinedStudents.find(s => {
-            const sEmail = (s.email || '').trim().toLowerCase();
-            const sAwardNumber = (s.awardNumber || '').trim();
-            const sPass = (s.password || '').trim();
+        const student = storedStudents.find(s => {
+            const sEmail = ((s.email || '').trim().toLowerCase());
+            const sAward = ((s.awardNumber || '').trim().toLowerCase());
+            const sStudentId = ((s.studentId || '').trim().toLowerCase());
+            const sPass = ((s.password || '').trim());
             
-            // Check if login is by email or award number
-            if (email && sEmail === email) {
-                return sPass === password;
-            } else if (awardNumber && sAwardNumber === awardNumber) {
+            const idMatches = identifier && (sAward === identifier || sStudentId === identifier);
+            const emailMatches = email && sEmail === email;
+            if (emailMatches || idMatches) {
                 return sPass === password;
             }
             return false;
         });
         
         if (student) {
+            // Ensure student has a numeric id saved for downstream features
+            const ensured = ensureStudentHasId(student);
             currentUser = {
-                id: student.id,
+                id: ensured.id,
                 name: `${student.firstName} ${student.lastName}`,
                 email: student.email,
                 role: 'student',
-                studentData: student
+                studentData: ensured
             };
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            if (!safeSetItem('currentUser', JSON.stringify(currentUser))) {
+                showToast('Storage is full. Logged in without saving session.', 'warning');
+            }
+            if (document && document.body) {
+                document.body.classList.add('logged-in');
+                document.body.classList.remove('admin-logged-in');
+            }
+            try { updateNavigation(); } catch (_) { /* ignore */ }
             showToast('Login successful!', 'success');
             showDashboard();
         } else {
@@ -284,10 +421,47 @@ function handleLogin(event) {
     }
 }
 
+// Safe localStorage setter - prevents quota errors from breaking flows
+function safeSetItem(key, value) {
+    try {
+        localStorage.setItem(key, value);
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
+// Guarantee stored student has a unique numeric id; persists back to localStorage if missing
+function ensureStudentHasId(student) {
+    if (student && typeof student.id === 'number' && student.id > 0) return student;
+    const stored = JSON.parse(localStorage.getItem('students') || '[]');
+    const matchIdx = stored.findIndex(s => (
+        (s.awardNumber && student.awardNumber && String(s.awardNumber).trim().toLowerCase() === String(student.awardNumber).trim().toLowerCase()) ||
+        (s.email && student.email && String(s.email).trim().toLowerCase() === String(student.email).trim().toLowerCase()) ||
+        (s.studentId && student.studentId && String(s.studentId).trim().toLowerCase() === String(student.studentId).trim().toLowerCase())
+    ));
+    const nextId = stored.reduce((m, s) => {
+        const idNum = typeof s.id === 'number' ? s.id : 0;
+        return idNum > m ? idNum : m;
+    }, 0) + 1;
+    if (matchIdx !== -1) {
+        if (!stored[matchIdx].id) stored[matchIdx].id = nextId;
+        localStorage.setItem('students', JSON.stringify(stored));
+        student.id = stored[matchIdx].id;
+    } else if (!student.id) {
+        student.id = nextId;
+    }
+    return student;
+}
+
 function logout() {
     currentUser = null;
     localStorage.removeItem('currentUser');
     showToast('Logged out successfully', 'success');
+    if (document && document.body) {
+        document.body.classList.remove('logged-in');
+        document.body.classList.remove('admin-logged-in');
+    }
     showHome();
 }
 
@@ -302,10 +476,11 @@ function loadStudentHomepage() {
     const studentNotifications = notifications.filter(n => n.studentId === student.id);
     document.getElementById('studentNotificationCount').textContent = studentNotifications.length;
     
-    // Update message count
+    // Update message count (guard if element not present in sidebar)
     const studentMessages = JSON.parse(localStorage.getItem('studentMessages') || '[]');
     const unreadMessages = studentMessages.filter(m => m.studentId === student.id && m.sender === 'admin' && !m.read);
-    document.getElementById('studentMessageCount').textContent = unreadMessages.length;
+    const msgCountElHeader = document.getElementById('studentMessageCount');
+    if (msgCountElHeader) { msgCountElHeader.textContent = unreadMessages.length; }
     
     // Load profile information
     loadStudentProfile();
@@ -317,9 +492,9 @@ function loadStudentHomepage() {
     loadStudentMessages();
     // Make counters open Messages tab
     const msgCountEl = document.getElementById('studentMessageCount');
-    if (msgCountEl) { msgCountEl.style.cursor = 'pointer'; msgCountEl.onclick = () => showStudentTab('messages'); }
+    if (msgCountEl) { msgCountEl.style.cursor = 'pointer'; msgCountEl.onclick = () => openStudentMessages(); }
     const notifCountEl = document.getElementById('studentNotificationCount');
-    if (notifCountEl) { notifCountEl.style.cursor = 'pointer'; notifCountEl.onclick = () => showStudentTab('messages'); }
+    if (notifCountEl) { notifCountEl.style.cursor = 'pointer'; notifCountEl.onclick = () => openStudentMessages(); }
     
     // Initialize chat
     initializeChat();
@@ -329,12 +504,18 @@ function loadStudentHomepage() {
 function loadStudentProfile() {
     const student = currentUser.studentData;
     
-    document.getElementById('profileName').textContent = `${student.firstName} ${student.lastName}`;
-    document.getElementById('profileStudentId').textContent = student.studentId;
-    document.getElementById('profileEmail').textContent = student.email;
-    document.getElementById('profileCourse').textContent = student.course;
-    document.getElementById('profileYear').textContent = student.year;
-    document.getElementById('profileAwardNumber').textContent = student.awardNumber || 'Not assigned';
+    const sideName = document.getElementById('profileName');
+    if (sideName) sideName.textContent = `${student.firstName} ${student.lastName}`;
+    const sideId = document.getElementById('profileStudentId');
+    if (sideId) sideId.textContent = student.studentId;
+    const sideEmail = document.getElementById('profileEmail');
+    if (sideEmail) sideEmail.textContent = student.email;
+    const sideCourse = document.getElementById('profileCourse');
+    if (sideCourse) sideCourse.textContent = student.course;
+    const sideYear = document.getElementById('profileYear');
+    if (sideYear) sideYear.textContent = student.year;
+    const sideAward = document.getElementById('profileAwardNumber');
+    if (sideAward) sideAward.textContent = student.awardNumber || 'Not assigned';
     const statusEl = document.getElementById('profileStatus');
     if (statusEl) {
         const flags = [];
@@ -346,13 +527,39 @@ function loadStudentProfile() {
     const pwdEl = document.getElementById('profilePwd');
     if (indigenousEl) indigenousEl.textContent = student.isIndigenous ? 'Yes' : 'No';
     if (pwdEl) pwdEl.textContent = student.isPwd ? 'Yes' : 'No';
+
+    // Also populate main profile panel fields if present
+    const nameMain = document.getElementById('profileNameMain');
+    if (nameMain) nameMain.textContent = `${student.firstName} ${student.lastName}`;
+    const idMain = document.getElementById('profileStudentIdMain');
+    if (idMain) idMain.textContent = student.studentId;
+    const emailMain = document.getElementById('profileEmailMain');
+    if (emailMain) emailMain.textContent = student.email;
+    const courseMain = document.getElementById('profileCourseMain');
+    if (courseMain) courseMain.textContent = student.course;
+    const yearMain = document.getElementById('profileYearMain');
+    if (yearMain) yearMain.textContent = student.year;
+    const awardMain = document.getElementById('profileAwardNumberMain');
+    if (awardMain) awardMain.textContent = student.awardNumber || 'Not assigned';
+    const statusMain = document.getElementById('profileStatusMain');
+    if (statusMain) {
+        const flagsMain = [];
+        if (student.isIndigenous) flagsMain.push('INDIGENOUS PEOPLE');
+        if (student.isPwd) flagsMain.push("PWD's");
+        statusMain.textContent = flagsMain.length ? flagsMain.join(', ') : '—';
+    }
+    const indigenousMain = document.getElementById('profileIndigenousMain');
+    if (indigenousMain) indigenousMain.textContent = student.isIndigenous ? 'Yes' : 'No';
+    const pwdMain = document.getElementById('profilePwdMain');
+    if (pwdMain) pwdMain.textContent = student.isPwd ? 'Yes' : 'No';
 }
 
 function loadStudentAnnouncements() {
     const adminPosts = JSON.parse(localStorage.getItem('adminPosts') || '[]');
     const container = document.getElementById('studentAnnouncementsFeed');
     
-    if (adminPosts.length === 0) {
+    const studentScoped = adminPosts.filter(p => p && (p.audience === 'students' || !p.audience));
+    if (studentScoped.length === 0) {
         container.innerHTML = `
             <div class="no-posts">
                 <i class="fas fa-newspaper"></i>
@@ -363,7 +570,7 @@ function loadStudentAnnouncements() {
         return;
     }
 
-    container.innerHTML = adminPosts.map(post => {
+    container.innerHTML = studentScoped.map(post => {
         const comments = JSON.parse(localStorage.getItem('studentComments') || '[]');
         const postComments = comments.filter(comment => comment.postId === post.id);
         
@@ -718,6 +925,55 @@ function openManageStudents() {
     const navTabs = document.querySelector('.admin-nav-tabs');
     if (navTabs) {
         navTabs.style.display = 'none';
+    }
+}
+
+// Show Profile panel when clicking the sidebar profile card header
+function showStudentProfile() {
+    const homepageContent = document.getElementById('student-homepage-content');
+    const tabContent = document.querySelector('#student-homepage .tab-content');
+    const navTabs = document.querySelector('#student-homepage .admin-nav-tabs');
+
+    if (homepageContent && tabContent && navTabs) {
+        homepageContent.style.display = 'none';
+        tabContent.style.display = 'block';
+        // Hide tabs when viewing profile via sidebar
+        navTabs.style.display = 'none';
+
+        // Hide all panels and show profile panel
+        document.querySelectorAll('#student-homepage .tab-panel').forEach(panel => panel.classList.remove('active'));
+        const profilePanel = document.getElementById('profile-tab');
+        if (profilePanel) profilePanel.classList.add('active');
+
+        // Do not alter tab button active state (tabs remain Announcements/Messages)
+        document.querySelectorAll('#student-homepage .nav-tab-btn').forEach(btn => btn.classList.remove('active'));
+    }
+
+    // Ensure profile data is populated
+    loadStudentProfile();
+}
+
+// Open Messages from sidebar Notifications or counters
+function openStudentMessages() {
+    const homepageContent = document.getElementById('student-homepage-content');
+    const tabContent = document.querySelector('#student-homepage .tab-content');
+    const navTabs = document.querySelector('#student-homepage .admin-nav-tabs');
+
+    if (homepageContent && tabContent && navTabs) {
+        homepageContent.style.display = 'none';
+        tabContent.style.display = 'block';
+        navTabs.style.display = 'flex';
+
+        // Switch to messages panel and highlight Messages tab button
+        document.querySelectorAll('#student-homepage .tab-panel').forEach(panel => panel.classList.remove('active'));
+        const msgPanel = document.getElementById('messages-tab');
+        if (msgPanel) msgPanel.classList.add('active');
+        document.querySelectorAll('#student-homepage .nav-tab-btn').forEach(btn => btn.classList.remove('active'));
+        const msgBtn = document.querySelector(`#student-homepage .nav-tab-btn[onclick*="'messages'"]`);
+        if (msgBtn) msgBtn.classList.add('active');
+
+        // Ensure messages render
+        setTimeout(loadStudentMessages, 0);
     }
 }
 
@@ -1573,35 +1829,179 @@ function scrollProfileChatToBottom() {
 // Admin Posting Functions
 function createPost(type) {
     const postInput = document.getElementById('postInput');
-    const content = postInput.value.trim();
+    const content = (postInput && postInput.value ? postInput.value.trim() : '').toString();
+    const audienceSelect = document.getElementById('postAudience');
+    const courseSelect = document.getElementById('postCourse');
+    const audience = audienceSelect ? audienceSelect.value : 'students';
+    const course = courseSelect ? courseSelect.value : '';
+    const imageDataUrl = window.__pendingPostImageDataUrl || null;
+    const imageList = Array.isArray(window.__pendingPostImages) ? window.__pendingPostImages : (imageDataUrl ? [imageDataUrl] : []);
+    const layoutSelect = document.getElementById('postLayout');
+    const layout = layoutSelect ? layoutSelect.value : 'image-left';
     
-    if (!content && type !== 'feeling') {
-        showToast('Please enter some content for your post', 'error');
+    if (window.__postingInProgress) {
+        return; // prevent double submissions
+    }
+    window.__postingInProgress = true;
+    const finish = () => { window.__postingInProgress = false; };
+    
+    // Require either text or at least one image (except special 'feeling' type)
+    if (!content && imageList.length === 0 && type !== 'feeling') {
+        showToast('Please enter text or add at least one image', 'error');
+        finish();
         return;
     }
     
-    const post = {
+    // Load existing posts from localStorage (single source of truth)
+    const allPosts = JSON.parse(localStorage.getItem('adminPosts') || '[]');
+    
+    const newPost = {
         id: Date.now(),
         author: 'Administrator',
         content: content || `Created a ${type} post`,
         type: type,
+        audience: audience, // 'students' or 'home' (and possibly 'specific')
+        course: audience === 'specific' ? course : null,
+        image: imageDataUrl,
+        images: imageList,
+        layout: layout,
         timestamp: new Date().toISOString(),
         likes: 0,
-        comments: 0,
+        comments: [],
         shares: 0,
         liked: false
     };
     
-    adminPosts.unshift(post);
-    postInput.value = '';
+    try {
+        allPosts.unshift(newPost);
+        localStorage.setItem('adminPosts', JSON.stringify(allPosts));
+    } catch (e) {
+        showToast('Post is too large to save. Try fewer/smaller images.', 'error');
+        finish();
+        return;
+    }
+    
+    // Reset inputs
+    if (postInput) postInput.value = '';
+    if (audienceSelect) audienceSelect.value = 'students';
+    if (courseSelect) courseSelect.style.display = 'none';
+    const layoutSelectReset = document.getElementById('postLayout');
+    if (layoutSelectReset) layoutSelectReset.value = 'image-left';
+    clearPostImage();
+    
     loadAdminPosts();
+    // If on Home, refresh Home feed too
+    if (document.getElementById('home') && document.getElementById('home').classList.contains('active')) {
+        if (typeof loadHomeFeed === 'function') loadHomeFeed();
+    }
     showToast('Post created successfully!', 'success');
+    finish();
+}
+
+// Ensure Publish button uses unified createPost logic
+function publishPost() {
+    createPost('text');
+}
+
+// Post image helpers
+function triggerPostImageUpload() {
+    const input = document.getElementById('postImageInput');
+    if (input) input.click();
+}
+
+// Simple carousel renderer and controller
+function renderCarousel(images) {
+    const id = `carousel-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+    const slides = images.map((src, idx) => `<div class=\"carousel-slide ${idx===0?'active':''}\"><img src=\"${src}\" alt=\"image ${idx+1}\"></div>`).join('');
+    return `
+    <div class=\"carousel\" id=\"${id}\" data-index=\"0\">\n        <button class=\"carousel-arrow left\" onclick=\"carouselPrev('${id}')\" aria-label=\"Previous\">&#10094;</button>\n        <div class=\"carousel-track\">${slides}</div>\n        <button class=\"carousel-arrow right\" onclick=\"carouselNext('${id}')\" aria-label=\"Next\">&#10095;</button>\n    </div>`;
+}
+
+function carouselNext(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const slides = el.querySelectorAll('.carousel-slide');
+    if (slides.length === 0) return;
+    let index = parseInt(el.getAttribute('data-index') || '0', 10);
+    slides[index].classList.remove('active');
+    index = (index + 1) % slides.length;
+    slides[index].classList.add('active');
+    el.setAttribute('data-index', String(index));
+}
+
+function carouselPrev(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const slides = el.querySelectorAll('.carousel-slide');
+    if (slides.length === 0) return;
+    let index = parseInt(el.getAttribute('data-index') || '0', 10);
+    slides[index].classList.remove('active');
+    index = (index - 1 + slides.length) % slides.length;
+    slides[index].classList.add('active');
+    el.setAttribute('data-index', String(index));
+}
+
+function handlePostImagesSelected(event) {
+    const files = (event.target.files && Array.from(event.target.files)) || [];
+    if (files.length === 0) return;
+    const imageFiles = files.filter(f => f.type && f.type.startsWith('image/'));
+    if (imageFiles.length === 0) {
+        showToast('Please select image files', 'error');
+        return;
+    }
+    const readers = [];
+    window.__pendingPostImages = [];
+    imageFiles.forEach((file, idx) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            window.__pendingPostImages.push(e.target.result);
+            if (idx === 0) {
+                window.__pendingPostImageDataUrl = e.target.result;
+                const prev = document.getElementById('postImagePreview');
+                const img = document.getElementById('postImagePreviewImg');
+                const count = document.getElementById('postImageCount');
+                if (prev && img) {
+                    img.src = e.target.result;
+                    prev.style.display = 'flex';
+                }
+                if (count) {
+                    count.textContent = `+${Math.max(0, imageFiles.length - 1)}`;
+                    count.style.display = imageFiles.length > 1 ? 'inline-flex' : 'none';
+                }
+            } else {
+                const count = document.getElementById('postImageCount');
+                if (count) {
+                    count.textContent = `+${Math.max(0, window.__pendingPostImages.length - 1)}`;
+                    count.style.display = window.__pendingPostImages.length > 1 ? 'inline-flex' : 'none';
+                }
+            }
+        };
+        reader.readAsDataURL(file);
+        readers.push(reader);
+    });
+}
+
+function clearPostImage() {
+    window.__pendingPostImageDataUrl = null;
+    window.__pendingPostImages = [];
+    const input = document.getElementById('postImageInput');
+    if (input) input.value = '';
+    const prev = document.getElementById('postImagePreview');
+    const img = document.getElementById('postImagePreviewImg');
+    const count = document.getElementById('postImageCount');
+    if (prev && img) {
+        img.src = '';
+        prev.style.display = 'none';
+    }
+    if (count) { count.style.display = 'none'; }
 }
 
 function loadAdminPosts() {
     const postsFeed = document.getElementById('postsFeed');
+    if (!postsFeed) return;
+    const allPosts = JSON.parse(localStorage.getItem('adminPosts') || '[]');
     
-    if (adminPosts.length === 0) {
+    if (allPosts.length === 0) {
         postsFeed.innerHTML = `
             <div class="welcome-message">
                 <h3>Welcome to the Admin Dashboard</h3>
@@ -1611,73 +2011,93 @@ function loadAdminPosts() {
         return;
     }
     
-    const postsHTML = adminPosts.map(post => `
-        <div class="post-item">
+    postsFeed.innerHTML = allPosts.map(post => `
+        <div class="post-card">
             <div class="post-header">
-                <div class="post-author-pic">
+                <div class="post-author-avatar">
                     <i class="fas fa-user-shield"></i>
                 </div>
                 <div class="post-author-info">
                     <h4>${post.author}</h4>
                     <p>${formatDate(post.timestamp)}</p>
                 </div>
+                <span class="post-audience-badge ${post.audience}">
+                    ${post.audience === 'students' ? 'GranTES Students' : 'Home Page'}
+                </span>
             </div>
             <div class="post-content">
-                ${post.content}
+                ${Array.isArray(post.images) && post.images.length > 1 ? renderCarousel(post.images) : (post.image ? `<div class=\"post-image\"><img src=\"${post.image}\" alt=\"post image\"></div>` : '')}
+                <div class="post-text">${post.content}</div>
+                ${post.type === 'media' ? '<div class="post-media"><i class="fas fa-image"></i> Media attached</div>' : ''}
+                ${post.type === 'live' ? '<div class="post-live"><i class="fas fa-video"></i> Live video</div>' : ''}
+                ${post.type === 'feeling' ? '<div class="post-feeling"><i class="fas fa-smile"></i> Feeling/Activity</div>' : ''}
             </div>
             <div class="post-actions-bar">
+                ${post.audience === 'students' ? `
                 <button class="post-action-bar-btn ${post.liked ? 'liked' : ''}" onclick="toggleLike(${post.id})">
                     <i class="fas fa-heart"></i>
-                    <span>${post.likes}</span>
+                    <span>${post.likes || 0}</span>
                 </button>
                 <button class="post-action-bar-btn" onclick="commentPost(${post.id})">
                     <i class="fas fa-comment"></i>
-                    <span>${post.comments}</span>
+                    <span>${Array.isArray(post.comments) ? post.comments.length : (post.comments || 0)}</span>
                 </button>
-                <button class="post-action-bar-btn" onclick="sharePost(${post.id})">
-                    <i class="fas fa-share"></i>
-                    <span>${post.shares}</span>
+                ` : ''}
+                <button class="post-action-bar-btn" onclick="adminDeletePost(${post.id})">
+                    <i class="fas fa-trash"></i>
+                    <span>Delete</span>
                 </button>
             </div>
         </div>
     `).join('');
-    
-    postsFeed.innerHTML = postsHTML;
 }
 
 function toggleLike(postId) {
-    const post = adminPosts.find(p => p.id === postId);
-    if (post) {
-        if (post.liked) {
-            post.likes--;
-            post.liked = false;
-        } else {
-            post.likes++;
-            post.liked = true;
-        }
-        loadAdminPosts();
+    const allPosts = JSON.parse(localStorage.getItem('adminPosts') || '[]');
+    const post = allPosts.find(p => p.id === postId);
+    if (!post) return;
+    if (post.liked) {
+        post.likes = Math.max(0, (post.likes || 0) - 1);
+        post.liked = false;
+    } else {
+        post.likes = (post.likes || 0) + 1;
+        post.liked = true;
     }
+    localStorage.setItem('adminPosts', JSON.stringify(allPosts));
+    loadAdminPosts();
 }
 
 function commentPost(postId) {
     const comment = prompt('Add a comment:');
-    if (comment && comment.trim()) {
-        const post = adminPosts.find(p => p.id === postId);
-        if (post) {
-            post.comments++;
-            loadAdminPosts();
-            showToast('Comment added!', 'success');
-        }
-    }
+    if (!comment || !comment.trim()) return;
+    const allPosts = JSON.parse(localStorage.getItem('adminPosts') || '[]');
+    const post = allPosts.find(p => p.id === postId);
+    if (!post) return;
+    if (!Array.isArray(post.comments)) post.comments = [];
+    post.comments.push({ id: Date.now(), author: 'Administrator', content: comment.trim(), timestamp: new Date().toISOString() });
+    localStorage.setItem('adminPosts', JSON.stringify(allPosts));
+    loadAdminPosts();
+    showToast('Comment added!', 'success');
 }
 
 function sharePost(postId) {
-    const post = adminPosts.find(p => p.id === postId);
-    if (post) {
-        post.shares++;
-        loadAdminPosts();
-        showToast('Post shared!', 'success');
-    }
+    const allPosts = JSON.parse(localStorage.getItem('adminPosts') || '[]');
+    const post = allPosts.find(p => p.id === postId);
+    if (!post) return;
+    post.shares = (post.shares || 0) + 1;
+    localStorage.setItem('adminPosts', JSON.stringify(allPosts));
+    loadAdminPosts();
+    showToast('Post shared!', 'success');
+}
+
+function adminDeletePost(postId) {
+    if (!confirm('Delete this post permanently?')) return;
+    const allPosts = JSON.parse(localStorage.getItem('adminPosts') || '[]');
+    const updated = allPosts.filter(p => p.id !== postId);
+    localStorage.setItem('adminPosts', JSON.stringify(updated));
+    loadAdminPosts();
+    try { loadHomeFeed(); } catch (_) { /* ignore */ }
+    showToast('Post deleted', 'success');
 }
 
 // Handle post input keypress
