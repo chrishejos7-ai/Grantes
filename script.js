@@ -573,6 +573,11 @@ function loadStudentAnnouncements() {
     container.innerHTML = studentScoped.map(post => {
         const comments = JSON.parse(localStorage.getItem('studentComments') || '[]');
         const postComments = comments.filter(comment => comment.postId === post.id);
+        const engagement = (post && post.engagement) ? post.engagement : { likes: [], comments: [], shares: [] };
+        const likeCount = Array.isArray(engagement.likes) ? engagement.likes.length : 0;
+        const likedByCurrent = (currentUser && currentUser.studentData)
+            ? (Array.isArray(engagement.likes) && engagement.likes.some(l => l && l.userId === currentUser.studentData.id))
+            : false;
         
         return `
             <div class="post-card">
@@ -589,9 +594,9 @@ function loadStudentAnnouncements() {
                     <div class="post-text">${post.content}</div>
                 </div>
                 <div class="post-actions">
-                    <button class="post-action-btn ${post.liked ? 'liked' : ''}" onclick="togglePostLike(${post.id})">
+                    <button class="post-action-btn ${likedByCurrent ? 'liked' : ''}" onclick="togglePostLike(${post.id})">
                         <i class="fas fa-heart"></i>
-                        <span>${post.likes}</span>
+                        <span>${likeCount}</span>
                     </button>
                     <button class="post-action-btn" onclick="toggleComments(${post.id})">
                         <i class="fas fa-comment"></i>
@@ -2011,45 +2016,29 @@ function loadAdminPosts() {
         return;
     }
     
-    postsFeed.innerHTML = allPosts.map(post => `
-        <div class="post-card">
-            <div class="post-header">
-                <div class="post-author-avatar">
-                    <i class="fas fa-user-shield"></i>
+    postsFeed.innerHTML = allPosts.map(post => {
+        const studentComments = JSON.parse(localStorage.getItem('studentComments') || '[]');
+        const postComments = studentComments.filter(c => c && c.postId === post.id);
+        const commentsHtml = postComments.length
+            ? postComments.map(c => `
+                <div class=\"admin-comment-row\" style=\"padding:6px 8px; border-bottom:1px solid #e5e7eb;\">
+                    <strong>${c.author || 'Student'}</strong>: ${c.text || ''}
+                    <span style=\"color:#9ca3af; font-size:12px; margin-left:6px;\">${c.timestamp ? formatDate(c.timestamp) : ''}</span>
                 </div>
-                <div class="post-author-info">
-                    <h4>${post.author}</h4>
-                    <p>${formatDate(post.timestamp)}</p>
-                </div>
-                <span class="post-audience-badge ${post.audience}">
-                    ${post.audience === 'students' ? 'GranTES Students' : 'Home Page'}
-                </span>
-            </div>
-            <div class="post-content">
-                ${Array.isArray(post.images) && post.images.length > 1 ? renderCarousel(post.images) : (post.image ? `<div class=\"post-image\"><img src=\"${post.image}\" alt=\"post image\"></div>` : '')}
-                <div class="post-text">${post.content}</div>
-                ${post.type === 'media' ? '<div class="post-media"><i class="fas fa-image"></i> Media attached</div>' : ''}
-                ${post.type === 'live' ? '<div class="post-live"><i class="fas fa-video"></i> Live video</div>' : ''}
-                ${post.type === 'feeling' ? '<div class="post-feeling"><i class="fas fa-smile"></i> Feeling/Activity</div>' : ''}
-            </div>
-            <div class="post-actions-bar">
-                ${post.audience === 'students' ? `
-                <button class="post-action-bar-btn ${post.liked ? 'liked' : ''}" onclick="toggleLike(${post.id})">
-                    <i class="fas fa-heart"></i>
-                    <span>${post.likes || 0}</span>
-                </button>
-                <button class="post-action-bar-btn" onclick="commentPost(${post.id})">
-                    <i class="fas fa-comment"></i>
-                    <span>${Array.isArray(post.comments) ? post.comments.length : (post.comments || 0)}</span>
-                </button>
-                ` : ''}
-                <button class="post-action-bar-btn" onclick="adminDeletePost(${post.id})">
-                    <i class="fas fa-trash"></i>
-                    <span>Delete</span>
-                </button>
-            </div>
+            `).join('')
+            : '<div class=\"admin-no-comments\" style=\"color:#9ca3af; font-style:italic; padding:6px 8px;\">No student comments</div>';
+
+        const likesCount = (post && post.engagement && Array.isArray(post.engagement.likes)) ? post.engagement.likes.length : (post.likes || 0);
+        const commentsHeader = `<div style="padding:8px 10px; font-weight:600; color:#111827; background:#f3f4f6; display:flex; align-items:center; gap:10px;"><span><i class="fas fa-heart" style="color:#ef4444;"></i> ${likesCount} ${likesCount===1 ? 'Like' : 'Likes'}</span><span style="opacity:0.4">•</span><span>Student Comments (${postComments.length})</span></div>`;
+
+        return `
+        <div class=\"post-card\">\n            <div class=\"post-header\">\n                <div class=\"post-author-avatar\">\n                    <i class=\"fas fa-user-shield\"></i>\n                </div>\n                <div class=\"post-author-info\">\n                    <h4>${post.author}</h4>\n                    <p>${formatDate(post.timestamp)}</p>\n                </div>\n                <span class=\"post-audience-badge ${post.audience}\">\n                    ${post.audience === 'students' ? 'GranTES Students' : 'Home Page'}\n                </span>\n            </div>\n            <div class=\"post-content\">\n                ${Array.isArray(post.images) && post.images.length > 1 ? renderCarousel(post.images) : (post.image ? `<div class=\\\"post-image\\\"><img src=\\\"${post.image}\\\" alt=\\\"post image\\\"></div>` : '')}\n                <div class=\"post-text\">${post.content}</div>\n                ${post.type === 'media' ? '<div class=\"post-media\"><i class=\"fas fa-image\"></i> Media attached</div>' : ''}\n                ${post.type === 'live' ? '<div class=\"post-live\"><i class=\"fas fa-video\"></i> Live video</div>' : ''}\n                ${post.type === 'feeling' ? '<div class=\"post-feeling\"><i class=\"fas fa-smile\"></i> Feeling/Activity</div>' : ''}\n            </div>\n            <div class=\"post-actions-bar\">\n                <button class=\"post-action-bar-btn\" onclick=\"adminDeletePost(${post.id})\">\n                    <i class=\"fas fa-trash\"></i>\n                    <span>Delete</span>\n                </button>\n            </div>
+            ${post.audience === 'students' ? `
+            <div class=\"admin-comments-section\" style=\"margin-top:10px; background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; overflow:hidden;\">\n                ${commentsHeader}\n                <div>${commentsHtml}</div>\n            </div>
+            ` : ''}
         </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 function toggleLike(postId) {
@@ -2199,20 +2188,19 @@ function triggerFileUpload() {
 // Student Announcement Functions
 function togglePostLike(postId) {
     const adminPosts = JSON.parse(localStorage.getItem('adminPosts') || '[]');
-    const post = adminPosts.find(p => p.id === postId);
-    if (post) {
-        if (post.liked) {
-            post.likes--;
-            post.liked = false;
-        } else {
-            post.likes++;
-            post.liked = true;
-        }
-        
-        // Update localStorage
-        localStorage.setItem('adminPosts', JSON.stringify(adminPosts));
-        loadStudentAnnouncements();
+    const post = adminPosts.find(p => p && p.id === postId);
+    if (!post) return;
+    if (!post.engagement) post.engagement = { likes: [], comments: [], shares: [] };
+    const currentId = currentUser && currentUser.studentData ? currentUser.studentData.id : null;
+    if (currentId == null) return;
+    const likeIdx = post.engagement.likes.findIndex(l => l && l.userId === currentId);
+    if (likeIdx >= 0) {
+        post.engagement.likes.splice(likeIdx, 1);
+    } else {
+        post.engagement.likes.push({ userId: currentId, userName: `${currentUser.studentData.firstName} ${currentUser.studentData.lastName}`, timestamp: new Date().toISOString() });
     }
+    localStorage.setItem('adminPosts', JSON.stringify(adminPosts));
+    loadStudentAnnouncements();
 }
 
 function toggleComments(postId) {
@@ -2669,4 +2657,3 @@ function filterStudents() {
 function searchStudents() {
     loadStudents();
 }
-
