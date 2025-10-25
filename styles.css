@@ -2771,6 +2771,16 @@ body {
     flex-shrink: 0;
 }
 
+/* Raise Admin "Register New Student" modal higher on screen */
+#studentRegistrationModal .modal-content.student-registration-modal {
+    margin-top: 4vh;
+}
+
+/* Raise Admin "Edit Student Information" modal higher on screen */
+#editStudentModal .modal-content.student-registration-modal {
+    margin-top: 4vh;
+}
+
 /* Toast Notification */
 .toast {
     position: fixed;
@@ -4666,7 +4676,7 @@ body::before {
 
 /* Messenger Styles */
 .messages-section {
-    max-width: 800px;
+    max-width: 100%;
     margin: 0 auto;
 }
 
@@ -4688,6 +4698,8 @@ body::before {
     height: 600px;
     display: flex;
     flex-direction: column;
+    margin: 0 auto; /* Center the messenger container */
+    max-width: 100%; /* Full width inside messages section */
 }
 
 .messenger-chat {
@@ -4776,20 +4788,32 @@ body::before {
     text-align: right;
 }
 
-.chat-input-container {
+.chat-input-container, .messenger-container .chat-input-container {
     border-top: 1px solid #e5e7eb;
-    padding: 1rem;
+    padding: 1.5rem; /* Increase padding */
     background: white;
+    display: flex;
+    justify-content: center; /* Center the input container */
 }
 
-.chat-input-wrapper {
+.chat-input-wrapper, .messenger-container .chat-input-wrapper {
     display: flex;
     align-items: center;
+    justify-content: center; /* Center the input */
     gap: 0.75rem;
     background: #f8fafc;
     border-radius: 24px;
-    padding: 0.5rem;
+    padding: 0.75rem; /* Increase padding for bigger appearance */
+    margin: 0 auto; /* Center the wrapper */
+    max-width: 100%; /* Full width input area */
+    width: 100%;
 }
+
+/* Student Messages tab specific widening to ensure overrides apply */
+#messages-tab .messages-section { max-width: 100%; }
+#messages-tab .messenger-container { max-width: 100%; }
+#studentMessengerChat .chat-input-wrapper { max-width: 100%; }
+#studentMessengerChat #chatMessageInput { width: 100%; font-size: 1.05rem; min-height: 50px; }
 
 .chat-attach-btn {
     background: none;
@@ -4806,13 +4830,22 @@ body::before {
     color: #374151;
 }
 
-.chat-message-input {
+.chat-message-input, #chatMessageInput {
     flex: 1;
     border: none;
-    background: none;
+    background: white;
     outline: none;
-    padding: 0.5rem;
-    font-size: 0.875rem;
+    padding: 0.75rem 1rem; /* Increase padding for bigger input */
+    font-size: 1rem; /* Increase font size */
+    min-height: 44px; /* Set minimum height for better touch targets */
+    border-radius: 20px;
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s ease;
+}
+
+.chat-message-input:focus, #chatMessageInput:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .chat-send-btn {
