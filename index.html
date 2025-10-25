@@ -26,44 +26,94 @@
     <div class="main-container">
         <!-- Home Section -->
         <section id="home" class="section active">
-            <div class="logo">
-                <div class="logo-content">
-                    <h1>Smart Subsidy Management System</h1>
-                    <p>Streamline your educational subsidy applications with our comprehensive management platform</p>
-                    <a href="https://docs.google.com/forms/d/e/1FAIpQLSejN9ltqtPy2eiC3TtPXPBl0bGLwwb6UjfbT5YITEVl8BiOcA/viewform?usp=header" target="_blank" class="btn btn-primary btn-large">Apply Here</a>
-                </div>
-                <div class="logo-image">
-                    <img src="nemsulogo.png" alt="NEMSULOGO" width="300">
+            <!-- Enhanced Hero Section -->
+            <div class="hero-section">
+                <div class="hero-content">
+                    <div class="hero-text">
+                        <div class="hero-badge">
+                            <i class="fas fa-graduation-cap"></i>
+                            <span>NEMSU GranTES Program</span>
+                        </div>
+                        <h1 class="hero-title">
+                            Smart Subsidy Management System
+                            <span class="hero-subtitle">Empowering Students Through Technology</span>
+                        </h1>
+                        <p class="hero-description">
+                            Streamline your educational subsidy applications with our comprehensive management platform. 
+                            Access financial assistance, track applications, and stay connected with the administration.
+                        </p>
+                        <div class="hero-actions">
+                            <a href="https://docs.google.com/forms/d/e/1FAIpQLSejN9ltqtPy2eiC3TtPXPBl0bGLwwb6UjfbT5YITEVl8BiOcA/viewform?usp=header" target="_blank" class="btn btn-primary btn-large">
+                                <i class="fas fa-paper-plane"></i>
+                                Apply Now
+                            </a>
+                            <button class="btn btn-outline btn-large" onclick="showLogin()">
+                                <i class="fas fa-sign-in-alt"></i>
+                                Student Login
+                            </button>
+                        </div>
+                    </div>
+                    <div class="hero-visual">
+                        <div class="hero-image-container">
+                            <img src="nemsulogo.png" alt="NEMSU Logo" class="hero-logo">
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Quick Links Section -->
+            <!-- Enhanced Quick Links Section -->
             <div class="quick-links-section">
-                <div class="quick-links-header">
-                    <i class="fas fa-link"></i>
-                    <h4>Quick Links</h4>
+                <div class="section-header">
+                    <div class="section-title">
+                        <i class="fas fa-link"></i>
+                        <h3>Quick Access</h3>
+                    </div>
+                    <p class="section-subtitle">Essential links and resources for students</p>
                 </div>
-                <div class="quick-links-buttons">
-                    <a href="https://ched.gov.ph/" target="_blank" class="quick-link-btn">
-                        <i class="fas fa-graduation-cap"></i>
-                        CHED Website
+                <div class="quick-links-grid">
+                    <a href="https://ched.gov.ph/" target="_blank" class="quick-link-card">
+                        <div class="card-icon">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <div class="card-content">
+                            <h4>CHED Website</h4>
+                            <p>Official Commission on Higher Education portal</p>
+                        </div>
+                        <div class="card-arrow">
+                            <i class="fas fa-external-link-alt"></i>
+                        </div>
                     </a>
-                    <button class="quick-link-btn" onclick="showGrantesList()">
-                        <i class="fas fa-list"></i>
-                        List of GranTES
+                    <button class="quick-link-card" onclick="showGrantesList()">
+                        <div class="card-icon">
+                            <i class="fas fa-list"></i>
+                        </div>
+                        <div class="card-content">
+                            <h4>GranTES Directory</h4>
+                            <p>View all registered GranTES students</p>
+                        </div>
+                        <div class="card-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
                     </button>
+                    
                 </div>
             </div>
 
-            <!-- Public Posts Feed (Home audience) -->
-            <div class="home-feed">
-                <div class="posts-feed" id="homeFeed">
-                    <!-- Home posts will render here -->
+            <!-- Enhanced Announcements Section -->
+            <div class="announcements-section">
+                <div class="section-header">
+                    <div class="section-title">
+                        <i class="fas fa-bullhorn"></i>
+                        <h3>Latest Announcements</h3>
+                    </div>
+                    <p class="section-subtitle">Stay updated with important news and updates</p>
+                </div>
+                <div class="announcements-container">
+                    <div class="posts-feed" id="homeFeed">
+                        <!-- Home posts will render here -->
+                    </div>
                 </div>
             </div>
-
-            
-            
         </section>
 
         <!-- Login Section -->
@@ -133,6 +183,17 @@
                         <label for="confirmPassword">Confirm Password:</label>
                         <input type="password" id="confirmPassword" required>
                     </div>
+                    <div class="form-group">
+                        <label for="department">Department:</label>
+                        <select id="department" required>
+                            <option value="">Select Department</option>
+                            <option value="Department of Computer Studies">Department of Computer Studies</option>
+                            <option value="Department of Business and Management">Department of Business and Management</option>
+                            <option value="Department of Industrial Technology">Department of Industrial Technology</option>
+                            <option value="Department of General Teacher Training">Department of General Teacher Training</option>
+                            <option value="College of Criminal Justice Education">College of Criminal Justice Education</option>
+                        </select>
+                    </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label for="course">Course:</label>
@@ -191,10 +252,10 @@
                             <i class="fas fa-home"></i>
                             Student Homepage
                         </button>
-                        <div class="user-info">
-                            <span id="studentName"></span>
-                            <button class="btn btn-secondary" onclick="logout()">Logout</button>
-                        </div>
+                            <div class="user-info">
+                                <span id="studentName"></span>
+                                <button class="btn btn-secondary" onclick="logout()">Logout</button>
+                            </div>
                     </div>
 
                     <div class="admin-content-body">
@@ -210,7 +271,7 @@
                         </div>
 
                         <!-- Navigation Tabs -->
-                        <div class="admin-nav-tabs">
+                        <div class="admin-nav-tabs" style="display:none;">
                             <button class="nav-tab-btn" onclick="showStudentTab('announcements')">Announcements</button>
                             <button class="nav-tab-btn" onclick="showStudentTab('messages')">Messages</button>
                         </div>
@@ -273,6 +334,20 @@
                                         <span class="status-badge" id="profileStatusMain"></span>
                                     </div>
                                     <div class="profile-info-grid">
+                                        <div class="profile-tile">
+                                            <div class="tile-icon"><i class="fas fa-building-columns"></i></div>
+                                            <div class="tile-content">
+                                                <div class="tile-label">Department</div>
+                                                <div class="tile-value" id="profileDepartmentMain"></div>
+                                            </div>
+                                        </div>
+                                        <div class="profile-tile">
+                                            <div class="tile-icon"><i class="fas fa-location-dot"></i></div>
+                                            <div class="tile-content">
+                                                <div class="tile-label">From</div>
+                                                <div class="tile-value" id="profilePlaceMain"></div>
+                                            </div>
+                                        </div>
                                         <div class="profile-tile">
                                             <div class="tile-icon"><i class="fas fa-book"></i></div>
                                             <div class="tile-content">
@@ -345,7 +420,7 @@
                                 <p id="totalPending">0</p>
                             </div>
                         </div>
-                        <div class="sidebar-stat-card">
+                        <div class="sidebar-stat-card" onclick="viewArchived()" style="cursor:pointer;">
                             <i class="fas fa-archive"></i>
                             <div class="stat-info">
                                 <h3>Archived</h3>
@@ -474,11 +549,6 @@
                         <div class="students-list">
                             <h3>Student Records</h3>
                             <div class="filter-bar">
-                                <select id="studentStatusFilter" onchange="filterStudents()">
-                                    <option value="">All Students</option>
-                                    <option value="active">Active</option>
-                                    <option value="archived">Archived</option>
-                                </select>
                                 <input type="text" id="searchStudentRecords" placeholder="Search students..." onkeyup="searchStudents()">
                             </div>
                             <div id="studentsContainer">
@@ -493,12 +563,14 @@
                             <h3>Reports & Analytics</h3>
                             <div class="report-cards">
                                 <div class="report-card">
-                                    <h4>Application Summary</h4>
-                                    <canvas id="applicationChart" width="400" height="200"></canvas>
+                                    <h4>Department Analysis</h4>
+                                    <canvas id="departmentChart" width="400" height="200"></canvas>
+                                    <div id="departmentSummary" class="report-summary"></div>
                                 </div>
                                 <div class="report-card">
-                                    <h4>Monthly Trends</h4>
-                                    <canvas id="trendChart" width="400" height="200"></canvas>
+                                    <h4>From Analysis</h4>
+                                    <canvas id="placeChart" width="400" height="200"></canvas>
+                                    <div id="placeSummary" class="report-summary"></div>
                                 </div>
                             </div>
                             <button class="btn btn-primary" onclick="generateReport()">Generate Report</button>
@@ -511,12 +583,55 @@
                             <h3>System Settings</h3>
                             <div class="settings-form">
                                 <div class="form-group">
-                                    <label for="subsidyTypes">Subsidy Types:</label>
-                                    <textarea id="subsidyTypes" rows="3" placeholder="Enter subsidy types (one per line)"></textarea>
+                                    <label for="adminEmailSetting">Admin Email:</label>
+                                    <input type="email" id="adminEmailSetting" placeholder="Enter admin email">
                                 </div>
                                 <div class="form-group">
-                                    <label for="systemMessage">System Message:</label>
-                                    <textarea id="systemMessage" rows="3" placeholder="Global message for all users"></textarea>
+                                    <label for="adminPasswordSetting">Admin Password:</label>
+                                    <input type="password" id="adminPasswordSetting" placeholder="Enter new password">
+                                </div>
+                                <div class="form-group">
+                                    <label for="adminPasswordConfirmSetting">Confirm Password:</label>
+                                    <input type="password" id="adminPasswordConfirmSetting" placeholder="Confirm new password">
+                                </div>
+                                <div class="form-group">
+                                    <h4 style="margin-bottom:0.5rem;">Update Student Credentials</h4>
+                                    <div class="form-group" style="margin-top:0.5rem;">
+                                        <label for="adminStudentLookup">Student Identifier (Award No. / Student ID / Email)</label>
+                                        <input type="text" id="adminStudentLookup" placeholder="Type to search... e.g., AW2025001, STU0001, name or email">
+                                        <input type="hidden" id="adminSelectedStudentId">
+                                        <div id="adminStudentSearchResults" class="admin-search-results"></div>
+                                        <div id="adminSelectedStudentSummary" class="selected-student-summary" style="display:none;">
+                                            <div class="summary-main">
+                                                <div class="summary-name" id="adminSelectedStudentName"></div>
+                                                <div class="summary-meta" id="adminSelectedStudentMeta"></div>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary btn-sm" onclick="clearSelectedStudent()">Clear</button>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="adminStudentNewAward">New Award Number</label>
+                                            <input type="text" id="adminStudentNewAward" placeholder="Leave blank to keep current" disabled>
+                                            <div id="adminAwardValidation" class="input-hint"></div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="adminStudentNewPassword">New Password</label>
+                                            <input type="password" id="adminStudentNewPassword" placeholder="Leave blank to keep current" disabled>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="adminStudentNewPasswordConfirm">Confirm New Password</label>
+                                        <input type="password" id="adminStudentNewPasswordConfirm" placeholder="Confirm new password" disabled>
+                                        <div class="form-row" style="margin-top: 0.5rem;">
+                                            <label style="display:flex; align-items:center; gap:8px;">
+                                                <input type="checkbox" id="adminShowPasswords" disabled>
+                                                <span>Show passwords</span>
+                                            </label>
+                                        </div>
+                                        <div id="adminPasswordValidation" class="input-hint"></div>
+                                    </div>
+                                    <button id="adminUpdateStudentBtn" class="btn btn-primary" onclick="updateStudentCredentialsFromSettings()" disabled>Update Student Account</button>
                                 </div>
                                 <button class="btn btn-primary" onclick="updateSettings()">Update Settings</button>
                             </div>
@@ -554,13 +669,16 @@
             </div>
             <div class="modal-body">
                 <div class="admin-student-profile">
+                    <!-- Left Column: Photo -->
                     <div class="admin-student-left">
                         <div class="admin-student-photo">
                             <img id="adminStudentPhoto" alt="Student ID Picture">
                         </div>
                         <div class="admin-student-photo-note">ID Picture preview</div>
                     </div>
-                    <div class="admin-student-right">
+                    
+                    <!-- Middle Column: Student Info -->
+                    <div class="admin-student-middle">
                         <div class="admin-student-name" id="adminStudentName"></div>
                         <div class="admin-student-meta">
                             <span id="adminStudentEmail"></span>
@@ -568,6 +686,14 @@
                             <span id="adminStudentId"></span>
                         </div>
                         <div class="admin-student-grid">
+                            <div class="admin-student-tile">
+                                <div class="label">Department</div>
+                                <div class="value" id="adminStudentDepartment"></div>
+                            </div>
+                            <div class="admin-student-tile">
+                                <div class="label">From</div>
+                                <div class="value" id="adminStudentPlace"></div>
+                            </div>
                             <div class="admin-student-tile">
                                 <div class="label">Course</div>
                                 <div class="value" id="adminStudentCourse"></div>
@@ -592,18 +718,20 @@
                                 <div class="label">Registered</div>
                                 <div class="value" id="adminStudentRegistered"></div>
                             </div>
-                                <div class="admin-student-tile">
-                                    <div class="label">Indigenous People</div>
-                                    <div class="value" id="adminStudentIndigenous"></div>
-                                </div>
-                                <div class="admin-student-tile">
-                                    <div class="label">PWD's</div>
-                                    <div class="value" id="adminStudentPwd"></div>
-                                </div>
+                            <div class="admin-student-tile">
+                                <div class="label">Indigenous People</div>
+                                <div class="value" id="adminStudentIndigenous"></div>
+                            </div>
+                            <div class="admin-student-tile">
+                                <div class="label">PWD's</div>
+                                <div class="value" id="adminStudentPwd"></div>
+                            </div>
                         </div>
-
-                        <!-- Admin-Student Messenger Chat -->
-                        <div class="profile-chat-container" style="margin-top: 1rem;">
+                    </div>
+                    
+                    <!-- Right Column: Chat -->
+                    <div class="admin-student-right">
+                        <div class="profile-chat-container">
                             <div class="profile-chat-header">
                                 <div style="display:flex; align-items:center; gap:0.75rem;">
                                     <div class="profile-avatar" style="width:36px; height:36px;">
@@ -639,64 +767,175 @@
         </div>
     </div>
 
+    <!-- Edit Student Modal -->
+    <div id="editStudentModal" class="modal">
+        <div class="modal-content student-registration-modal wide-modal">
+            <div class="modal-header">
+                <h3>Edit Student Information</h3>
+                <span class="close" onclick="closeEditStudentModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="editStudentForm" onsubmit="handleEditStudent(event)">
+                    <input type="hidden" id="editStudentId">
+                        <div class="form-grid-3">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editFirstName">First Name:</label>
+                            <input type="text" id="editFirstName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editLastName">Last Name:</label>
+                            <input type="text" id="editLastName" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editStudentIdInput">Student ID:</label>
+                            <input type="text" id="editStudentIdInput" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editEmail">Email:</label>
+                            <input type="email" id="editEmail" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editDepartment">Department:</label>
+                            <select id="editDepartment" required>
+                                <option value="">Select Department</option>
+                                <option value="Department of Computer Studies">Department of Computer Studies</option>
+                                <option value="Department of Business and Management">Department of Business and Management</option>
+                                <option value="Department of Industrial Technology">Department of Industrial Technology</option>
+                                <option value="Department of General Teacher Training">Department of General Teacher Training</option>
+                                <option value="College of Criminal Justice Education">College of Criminal Justice Education</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlace">From (Address/Origin):</label>
+                            <input type="text" id="editPlace" placeholder="e.g., City, Province" required>
+                        </div>
+                    </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editCourse">Course:</label>
+                                <input type="text" id="editCourse" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="editYear">Year Level:</label>
+                                <select id="editYear" required>
+                                    <option value="">Select Year</option>
+                                    <option value="1st">1st Year</option>
+                                    <option value="2nd">2nd Year</option>
+                                    <option value="3rd">3rd Year</option>
+                                    <option value="4th">4th Year</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="editPhoto">ID Picture (optional):</label>
+                                <input type="file" id="editPhoto" accept="image/*">
+                                <div id="currentPhotoPreview" style="margin-top: 10px;"></div>
+                            </div>
+                        </div>
+                        </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editIsIndigenous">INDIGENOUS PEOPLE:</label>
+                            <input type="checkbox" id="editIsIndigenous">
+                        </div>
+                        <div class="form-group">
+                            <label for="editIsPwd">PWD's:</label>
+                            <input type="checkbox" id="editIsPwd">
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-primary">Update Student</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeEditStudentModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Student Registration Modal -->
     <div id="studentRegistrationModal" class="modal">
-        <div class="modal-content student-registration-modal">
+        <div class="modal-content student-registration-modal wide-modal">
             <div class="modal-header">
                 <h3>Register New Student</h3>
                 <span class="close" onclick="closeStudentRegistrationModal()">&times;</span>
             </div>
             <div class="modal-body">
                 <form id="studentRegistrationForm" onsubmit="handleStudentRegistration(event)">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="adminFirstName">First Name:</label>
-                            <input type="text" id="adminFirstName" required>
+                    <div class="form-grid-3">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="adminFirstName">First Name:</label>
+                                <input type="text" id="adminFirstName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="adminLastName">Last Name:</label>
+                                <input type="text" id="adminLastName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="adminStudentIdInput">Student ID:</label>
+                                <input type="text" id="adminStudentIdInput" required>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="adminLastName">Last Name:</label>
-                            <input type="text" id="adminLastName" required>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="adminEmail">Email:</label>
+                                <input type="email" id="adminEmail" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="adminAwardNumber">Award Number:</label>
+                                <input type="text" id="adminAwardNumber" required placeholder="Student's unique award number">
+                            </div>
+                            <div class="form-group">
+                                <label for="adminPassword">Password:</label>
+                                <input type="password" id="adminPassword" required placeholder="Temporary password for student">
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="adminStudentIdInput">Student ID:</label>
-                        <input type="text" id="adminStudentIdInput" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="adminEmail">Email:</label>
-                        <input type="email" id="adminEmail" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="adminAwardNumber">Award Number:</label>
-                        <input type="text" id="adminAwardNumber" required placeholder="Student's unique award number">
-                    </div>
-                    <div class="form-group">
-                        <label for="adminPassword">Password:</label>
-                        <input type="password" id="adminPassword" required placeholder="Temporary password for student">
-                    </div>
-                    <div class="form-group">
-                        <label for="adminConfirmPassword">Confirm Password:</label>
-                        <input type="password" id="adminConfirmPassword" required>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="adminCourse">Course:</label>
-                            <input type="text" id="adminCourse" required>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="adminConfirmPassword">Confirm Password:</label>
+                                <input type="password" id="adminConfirmPassword" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="adminDepartment">Department:</label>
+                                <select id="adminDepartment" required>
+                                    <option value="">Select Department</option>
+                                    <option value="Department of Computer Studies">Department of Computer Studies</option>
+                                    <option value="Department of Business and Management">Department of Business and Management</option>
+                                    <option value="Department of Industrial Technology">Department of Industrial Technology</option>
+                                    <option value="Department of General Teacher Training">Department of General Teacher Training</option>
+                                    <option value="College of Criminal Justice Education">College of Criminal Justice Education</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="adminPlace">From (Address/Origin):</label>
+                                <input type="text" id="adminPlace" placeholder="e.g., City, Province" required>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="adminYear">Year Level:</label>
-                            <select id="adminYear" required>
-                                <option value="">Select Year</option>
-                                <option value="1st">1st Year</option>
-                                <option value="2nd">2nd Year</option>
-                                <option value="3rd">3rd Year</option>
-                                <option value="4th">4th Year</option>
-                            </select>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="adminCourse">Course:</label>
+                                <input type="text" id="adminCourse" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="adminYear">Year Level:</label>
+                                <select id="adminYear" required>
+                                    <option value="">Select Year</option>
+                                    <option value="1st">1st Year</option>
+                                    <option value="2nd">2nd Year</option>
+                                    <option value="3rd">3rd Year</option>
+                                    <option value="4th">4th Year</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="adminPhoto">ID Picture (optional):</label>
+                                <input type="file" id="adminPhoto" accept="image/*">
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="adminPhoto">ID Picture (optional):</label>
-                        <input type="file" id="adminPhoto" accept="image/*">
                     </div>
                     <div class="form-row">
                         <div class="form-group">
@@ -817,24 +1056,83 @@
         </div>
     </div>
 
+    
+
     <!-- GranTES List Modal -->
     <div id="grantesListModal" class="modal">
         <div class="modal-content grantes-list-modal">
             <div class="modal-header">
-                <h3>List of GranTES Students</h3>
-                <span class="close" onclick="closeGrantesListModal()">&times;</span>
+                <div class="modal-header-content">
+                    <div class="modal-title-section">
+                        <i class="fas fa-graduation-cap"></i>
+                        <h3>List of GranTES Students</h3>
+                    </div>
+                    <div class="modal-actions">
+                        <span class="close" onclick="closeGrantesListModal()">&times;</span>
+                    </div>
+                </div>
             </div>
             <div class="modal-body">
                 <div class="grantes-list-container">
                     <div class="grantes-list-header">
-                        <div class="search-container">
-                            <input type="text" id="grantesSearch" placeholder="Search students..." onkeyup="searchGrantes()">
-                            <i class="fas fa-search"></i>
+                        <div class="search-and-filters">
+                            <div class="search-container">
+                                <input type="text" id="grantesSearch" placeholder="Search students by name, course, department..." onkeyup="searchGrantes()">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <div class="filter-controls">
+                                <select id="grantesStatusFilter" onchange="filterGrantesByStatus()">
+                                    <option value="">All Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="approved">Approved</option>
+                                    <option value="rejected">Rejected</option>
+                                </select>
+                                <select id="grantesYearFilter" onchange="filterGrantesByYear()">
+                                    <option value="">All Years</option>
+                                    <option value="1st">1st Year</option>
+                                    <option value="2nd">2nd Year</option>
+                                    <option value="3rd">3rd Year</option>
+                                    <option value="4th">4th Year</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="grantes-stats">
-                            <span id="totalGrantesCount">0</span> Total Students
+                            <div class="stat-item">
+                                <span class="stat-number" id="totalGrantesCount">0</span>
+                                <span class="stat-label">Total Students</span>
+                            </div>
                         </div>
                     </div>
+                    
+                    <!-- Table Header -->
+                    <div class="grantes-table-header">
+                        <div class="table-header-cell name-col">
+                            <span>Student Name</span>
+                            <button class="sort-btn" onclick="sortGrantes('name')" title="Sort by name">
+                                <i class="fas fa-sort"></i>
+                            </button>
+                        </div>
+                        <div class="table-header-cell department-col">
+                            <span>Department</span>
+                            <button class="sort-btn" onclick="sortGrantes('department')" title="Sort by department">
+                                <i class="fas fa-sort"></i>
+                            </button>
+                        </div>
+                        <div class="table-header-cell course-col">
+                            <span>Course</span>
+                            <button class="sort-btn" onclick="sortGrantes('course')" title="Sort by course">
+                                <i class="fas fa-sort"></i>
+                            </button>
+                        </div>
+                        <div class="table-header-cell year-col">
+                            <span>Year</span>
+                            <button class="sort-btn" onclick="sortGrantes('year')" title="Sort by year">
+                                <i class="fas fa-sort"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
                     <div class="grantes-list-content" id="grantesListContent">
                         <!-- Student list will be populated here -->
                     </div>
@@ -1364,57 +1662,223 @@
             document.getElementById('grantesListModal').style.display = 'none';
         }
 
+        // Global variables for sorting and filtering
+        let currentSortField = 'name';
+        let currentSortDirection = 'asc';
+        let filteredStudents = [];
+
         function loadGrantesList() {
             const students = JSON.parse(localStorage.getItem('students') || '[]');
             const container = document.getElementById('grantesListContent');
-            const countElement = document.getElementById('totalGrantesCount');
+            const totalCountElement = document.getElementById('totalGrantesCount');
             
-            countElement.textContent = students.length;
+            // Apply current filters
+            filteredStudents = applyFilters(students);
             
-            if (students.length === 0) {
+            // Update statistics
+            totalCountElement.textContent = students.length;
+            
+            if (filteredStudents.length === 0) {
                 container.innerHTML = `
                     <div class="no-grantes">
                         <i class="fas fa-users"></i>
                         <h4>No Students Found</h4>
-                        <p>No GranTES students have been registered yet.</p>
+                        <p>${students.length === 0 ? 'No GranTES students have been registered yet.' : 'No students match your current filters.'}</p>
                     </div>
                 `;
                 return;
             }
 
-            container.innerHTML = students.map(student => `
-                <div class="grantes-student-item" data-name="${student.firstName} ${student.lastName}" data-course="${student.course}" data-year="${student.year}">
+            // Sort the filtered students
+            const sortedStudents = sortStudents(filteredStudents, currentSortField, currentSortDirection);
+
+            container.innerHTML = sortedStudents.map(student => `
+                <div class="grantes-student-item" 
+                     data-name="${student.firstName} ${student.lastName}" 
+                     data-course="${student.course}" 
+                     data-year="${student.year}" 
+                     data-department="${student.department || ''}"
+                     data-status="${student.applicationStatus || 'active'}"
+                     data-email="${student.email || ''}"
+                     data-award="${student.awardNumber || ''}">
                     <div class="grantes-student-name">
                         <i class="fas fa-user-graduate"></i>
-                        ${student.firstName} ${student.lastName}
+                        <div>
+                            <div>${student.firstName} ${student.lastName}</div>
+                            <div style="font-size: 0.75rem; color: #64748b; font-weight: 400;">
+                                ${student.email || student.awardNumber || 'No contact info'}
+                            </div>
+                        </div>
                     </div>
-                    <div class="grantes-student-info">${student.course}</div>
-                    <div class="grantes-student-info">${student.year} Year</div>
-                    <div class="grantes-student-status ${student.applicationStatus || 'active'}">
-                        ${student.applicationStatus === 'approved' ? 'Approved' : 
-                          student.applicationStatus === 'pending' ? 'Pending' : 
-                          student.applicationStatus === 'rejected' ? 'Rejected' : 'Active'}
+                    <div class="grantes-student-info">
+                        <div class="grantes-student-department">${student.department || 'Not specified'}</div>
+                    </div>
+                    <div class="grantes-student-info">
+                        <div class="grantes-student-course">${student.course || 'Not specified'}</div>
+                    </div>
+                    <div class="grantes-student-info">
+                        <div class="grantes-student-year">${student.year || 'N/A'} Year</div>
                     </div>
                 </div>
             `).join('');
         }
 
-        function searchGrantes() {
-            const searchTerm = document.getElementById('grantesSearch').value.toLowerCase();
-            const studentItems = document.querySelectorAll('.grantes-student-item');
+        function getStatusText(status) {
+            switch(status) {
+                case 'approved': return 'Approved';
+                case 'pending': return 'Pending';
+                case 'rejected': return 'Rejected';
+                default: return 'Active';
+            }
+        }
+
+        function applyFilters(students) {
+            const searchTerm = (document.getElementById('grantesSearch')?.value || '').trim().toLowerCase();
+            const statusFilter = document.getElementById('grantesStatusFilter')?.value || '';
+            const yearFilter = document.getElementById('grantesYearFilter')?.value || '';
             
-            studentItems.forEach(item => {
-                const name = item.dataset.name.toLowerCase();
-                const course = item.dataset.course.toLowerCase();
-                const year = item.dataset.year.toLowerCase();
+            return students.filter(student => {
+                const matchesSearch = !searchTerm || 
+                    (student.firstName || '').toLowerCase().includes(searchTerm) ||
+                    (student.lastName || '').toLowerCase().includes(searchTerm) ||
+                    (student.email || '').toLowerCase().includes(searchTerm) ||
+                    (student.awardNumber || '').toLowerCase().includes(searchTerm) ||
+                    (student.course || '').toLowerCase().includes(searchTerm) ||
+                    (student.department || '').toLowerCase().includes(searchTerm) ||
+                    (student.year || '').toLowerCase().includes(searchTerm);
                 
-                if (name.includes(searchTerm) || course.includes(searchTerm) || year.includes(searchTerm)) {
-                    item.style.display = 'grid';
-                } else {
-                    item.style.display = 'none';
-                }
+                const matchesStatus = !statusFilter || (student.applicationStatus || 'active') === statusFilter;
+                const matchesYear = !yearFilter || (student.year || '').toLowerCase().includes(yearFilter.toLowerCase());
+                
+                return matchesSearch && matchesStatus && matchesYear;
             });
         }
+
+        function sortStudents(students, field, direction) {
+            return [...students].sort((a, b) => {
+                let aValue, bValue;
+                
+                switch(field) {
+                    case 'name':
+                        aValue = `${a.firstName} ${a.lastName}`.toLowerCase();
+                        bValue = `${b.firstName} ${b.lastName}`.toLowerCase();
+                        break;
+                    case 'department':
+                        aValue = (a.department || '').toLowerCase();
+                        bValue = (b.department || '').toLowerCase();
+                        break;
+                    case 'course':
+                        aValue = (a.course || '').toLowerCase();
+                        bValue = (b.course || '').toLowerCase();
+                        break;
+                    case 'status':
+                        aValue = (a.applicationStatus || 'active').toLowerCase();
+                        bValue = (b.applicationStatus || 'active').toLowerCase();
+                        break;
+                    default:
+                        aValue = (a[field] || '').toString().toLowerCase();
+                        bValue = (b[field] || '').toString().toLowerCase();
+                }
+                
+                if (aValue < bValue) return direction === 'asc' ? -1 : 1;
+                if (aValue > bValue) return direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+
+        function sortGrantes(field) {
+            if (currentSortField === field) {
+                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSortField = field;
+                currentSortDirection = 'asc';
+            }
+            
+            // Update sort button icons
+            document.querySelectorAll('.sort-btn i').forEach(icon => {
+                icon.className = 'fas fa-sort';
+            });
+            
+            const currentSortBtn = document.querySelector(`[onclick="sortGrantes('${field}')"] i`);
+            if (currentSortBtn) {
+                currentSortBtn.className = currentSortDirection === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
+            }
+            
+            loadGrantesList();
+        }
+
+        function filterGrantesByStatus() {
+            loadGrantesList();
+        }
+
+        function filterGrantesByYear() {
+            loadGrantesList();
+        }
+
+        function searchGrantes() {
+            loadGrantesList();
+        }
+
+        function viewStudentProfile(studentId) {
+            const students = JSON.parse(localStorage.getItem('students') || '[]');
+            const student = students.find(s => s.id == studentId);
+            
+            if (student) {
+                // Create a detailed profile modal or navigate to student details
+                const profileInfo = `
+                    <div style="padding: 1rem; background: white; border-radius: 8px; margin: 1rem 0;">
+                        <h3 style="color: #1e293b; margin-bottom: 1rem;">
+                            <i class="fas fa-user-graduate" style="color: #667eea; margin-right: 0.5rem;"></i>
+                            ${student.firstName} ${student.lastName}
+                        </h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.9rem;">
+                            <div><strong>Email:</strong> ${student.email || 'Not provided'}</div>
+                            <div><strong>Award Number:</strong> ${student.awardNumber || 'Not provided'}</div>
+                            <div><strong>Student ID:</strong> ${student.studentId || 'Not provided'}</div>
+                            <div><strong>Course:</strong> ${student.course || 'Not provided'}</div>
+                            <div><strong>Year:</strong> ${student.year || 'Not provided'}</div>
+                            <div><strong>Department:</strong> ${student.department || 'Not provided'}</div>
+                            <div><strong>Status:</strong> 
+                                <span class="grantes-student-status ${student.applicationStatus || 'active'}">
+                                    ${getStatusText(student.applicationStatus)}
+                                </span>
+                            </div>
+                            <div><strong>Registration Date:</strong> ${student.registrationDate || 'Not available'}</div>
+                        </div>
+                    </div>
+                `;
+                
+                // You could show this in a modal or alert
+                alert(`Student Profile:\n\n${student.firstName} ${student.lastName}\nEmail: ${student.email || 'Not provided'}\nAward Number: ${student.awardNumber || 'Not provided'}\nCourse: ${student.course || 'Not provided'}\nYear: ${student.year || 'Not provided'}\nDepartment: ${student.department || 'Not provided'}\nStatus: ${getStatusText(student.applicationStatus)}`);
+            } else {
+                showToast('Student not found', 'error');
+            }
+        }
+
+        function sendMessageToStudent(studentId) {
+            const students = JSON.parse(localStorage.getItem('students') || '[]');
+            const student = students.find(s => s.id == studentId);
+            
+            if (student) {
+                // Open chat and focus on input
+                if (typeof openChat === 'function') {
+                    openChat();
+                    // Focus on chat input after a short delay
+                    setTimeout(() => {
+                        const chatInput = document.getElementById('chatInput');
+                        if (chatInput) {
+                            chatInput.focus();
+                            chatInput.value = `@${student.firstName} ${student.lastName} `;
+                        }
+                    }, 300);
+                } else {
+                    showToast('Chat feature not available', 'warning');
+                }
+            } else {
+                showToast('Student not found', 'error');
+            }
+        }
+
 
         // Close modal when clicking outside
         window.onclick = function(event) {
@@ -1488,99 +1952,13 @@
             createPost('text');
         }
 
-        // Load posts feed
-        function loadPostsFeed() {
-            const postsFeed = document.getElementById('postsFeed');
-            
-            if (posts.length === 0) {
-                postsFeed.innerHTML = `
-                    <div class="welcome-message">
-                        <h3>Welcome to the Admin Dashboard</h3>
-                        <p>Manage student applications, view reports, and configure system settings from this central location.</p>
-                    </div>
-                `;
-                return;
-            }
+        // loadPostsFeed function removed - using the one from script.js instead
 
-            postsFeed.innerHTML = posts.map(post => `
-                <div class="post-card">
-                    <div class="post-header">
-                        <div class="post-author-avatar">
-                            <i class="fas fa-user-shield"></i>
-                        </div>
-                        <div class="post-author-info">
-                            <h4>${post.author}</h4>
-                            <p>${new Date(post.timestamp).toLocaleDateString()} at ${new Date(post.timestamp).toLocaleTimeString()}</p>
-                        </div>
-                        <span class="post-audience-badge ${post.audience}">
-                            ${post.audience === 'students' ? 'GranTES Students' : 'Home Page'}
-                        </span>
-                    </div>
-                    <div class="post-content">
-                        <div class="post-text">${post.content}</div>
-                        ${post.type === 'media' ? '<div class="post-media"><i class="fas fa-image"></i> Media attached</div>' : ''}
-                        ${post.type === 'live' ? '<div class="post-live"><i class="fas fa-video"></i> Live video</div>' : ''}
-                        ${post.type === 'feeling' ? '<div class="post-feeling"><i class="fas fa-smile"></i> Feeling/Activity</div>' : ''}
-                    </div>
-                    <div class="post-actions">
-                        <button class="post-action-btn" onclick="likePost(${post.id})">
-                            <i class="fas fa-thumbs-up"></i>
-                            <span>${post.likes}</span>
-                        </button>
-                        <button class="post-action-btn" onclick="commentPost(${post.id})">
-                            <i class="fas fa-comment"></i>
-                            <span>Comment</span>
-                        </button>
-                        <button class="post-action-btn" onclick="deletePost(${post.id})">
-                            <i class="fas fa-trash"></i>
-                            <span>Delete</span>
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // Like post function
-        function likePost(postId) {
-            const post = posts.find(p => p.id === postId);
-            if (post) {
-                post.likes++;
-                localStorage.setItem('adminPosts', JSON.stringify(posts));
-                loadPostsFeed();
-            }
-        }
-
-        // Comment post function
-        function commentPost(postId) {
-            const comment = prompt('Enter your comment:');
-            if (comment && comment.trim()) {
-                const post = posts.find(p => p.id === postId);
-                if (post) {
-                    post.comments.push({
-                        id: Date.now(),
-                        content: comment,
-                        author: 'Administrator',
-                        timestamp: new Date().toISOString()
-                    });
-                    localStorage.setItem('adminPosts', JSON.stringify(posts));
-                    loadPostsFeed();
-                }
-            }
-        }
-
-        // Delete post function
-        function deletePost(postId) {
-            if (confirm('Are you sure you want to delete this post?')) {
-                posts = posts.filter(p => p.id !== postId);
-                localStorage.setItem('adminPosts', JSON.stringify(posts));
-                loadPostsFeed();
-                showNotification('Post deleted successfully', 'success');
-            }
-        }
+        // Post action functions removed - using the ones from script.js instead
 
         // Initialize admin homepage
         function initializeAdminHomepage() {
-            loadPostsFeed();
+            loadAdminPosts(); // Use the function from script.js
             
             // Add event listener for audience change
             const audienceSelect = document.getElementById('postAudience');
@@ -1598,5 +1976,74 @@
         });
     </script>
     <script src="script.js"></script>
+    
+    <!-- Auto-expand textareas functionality -->
+    <script>
+        // Auto-expand textareas when typing
+        function autoExpandTextarea(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
+        }
+
+        // Add event listeners to all textareas for auto-expansion
+        document.addEventListener('DOMContentLoaded', function() {
+            // Function to add auto-expand to textareas
+            function addAutoExpandToTextareas() {
+                const textareas = document.querySelectorAll('textarea');
+                textareas.forEach(textarea => {
+                    // Remove existing listeners to avoid duplicates
+                    textarea.removeEventListener('input', textarea.autoExpandHandler);
+                    
+                    // Create new handler
+                    textarea.autoExpandHandler = function() {
+                        autoExpandTextarea(this);
+                    };
+                    
+                    // Add the event listener
+                    textarea.addEventListener('input', textarea.autoExpandHandler);
+                    
+                    // Set initial height
+                    autoExpandTextarea(textarea);
+                });
+            }
+            
+            // Add auto-expand to existing textareas
+            addAutoExpandToTextareas();
+            
+            // Watch for new textareas added dynamically
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'childList') {
+                        mutation.addedNodes.forEach(function(node) {
+                            if (node.nodeType === 1) { // Element node
+                                if (node.tagName === 'TEXTAREA') {
+                                    node.autoExpandHandler = function() {
+                                        autoExpandTextarea(this);
+                                    };
+                                    node.addEventListener('input', node.autoExpandHandler);
+                                    autoExpandTextarea(node);
+                                }
+                                // Check for textareas within added nodes
+                                const textareas = node.querySelectorAll ? node.querySelectorAll('textarea') : [];
+                                textareas.forEach(textarea => {
+                                    textarea.autoExpandHandler = function() {
+                                        autoExpandTextarea(this);
+                                    };
+                                    textarea.addEventListener('input', textarea.autoExpandHandler);
+                                    autoExpandTextarea(textarea);
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+            
+            // Start observing
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+        });
+    </script>
 </body>
 </html>
