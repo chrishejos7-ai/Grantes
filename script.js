@@ -1,9 +1,7 @@
 // Global Variables
 let currentUser = null;
 let students = [];
-let applications = [];
 let notifications = [];
-let currentApplicationId = null;
 let adminPosts = [];
 
 // Chat Variables
@@ -52,7 +50,6 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeApp() {
     // Load data from localStorage first, fallback to empty arrays
     const savedStudents = localStorage.getItem('students');
-    const savedApplications = localStorage.getItem('applications');
     
     if (savedStudents) {
         students = JSON.parse(savedStudents);
@@ -61,25 +58,6 @@ function initializeApp() {
         students = []; // Start with empty array - no sample data
         localStorage.setItem('students', JSON.stringify(students));
         console.log('Initialized with empty students array');
-    }
-    
-    if (savedApplications) {
-        applications = JSON.parse(savedApplications);
-        // Cleanup: remove legacy sample applications (with firstName/lastName fields)
-        try {
-            const cleanedApplications = applications.filter(app => app && (
-                (typeof app.studentId !== 'undefined' && (app.documentType || app.documentFiles))
-            ));
-            if (cleanedApplications.length !== applications.length) {
-                applications = cleanedApplications;
-                localStorage.setItem('applications', JSON.stringify(applications));
-            }
-        } catch (e) {
-            // ignore cleanup errors
-        }
-    } else {
-        applications = []; // Start with empty array
-        localStorage.setItem('applications', JSON.stringify(applications));
     }
     
     loadPersistedChatMessages();
@@ -283,11 +261,11 @@ function handleRegister(event) {
         course: formData.course,
         year: formData.year,
         status: 'active',
-        registrationDate: new Date().toISOString().split('T')[0],
-        applicationStatus: 'none'
+        registrationDate: new Date().toISOString().split('T')[0]
     };
     
     students.push(newStudent);
+    localStorage.setItem('students', JSON.stringify(students));
     showToast('Registration successful! Please login.', 'success');
     showLogin();
 }
@@ -297,10 +275,8 @@ function loadHomeFeed() {
     const feedEl = document.getElementById('homeFeed');
     if (!feedEl) return;
 
-    // Read from adminPosts; fallback to legacy 'posts' if present, then merge
-    const storedAdminPosts = JSON.parse(localStorage.getItem('adminPosts') || '[]');
-    const legacyPosts = JSON.parse(localStorage.getItem('posts') || '[]');
-    const allPosts = [...storedAdminPosts, ...legacyPosts];
+    // Read from adminPosts
+    const allPosts = JSON.parse(localStorage.getItem('adminPosts') || '[]');
 
     // Accept both 'home' and 'Home Page' values (legacy), and be lenient on casing
     const homePosts = allPosts.filter(p => {
@@ -791,98 +767,6 @@ function loadStudentNotifications() {
     `).join('');
 }
 
-function submitApplication(event) {
-    event.preventDefault();
-    
-    const idPicture = document.getElementById('idPictureUpload').files[0];
-    const idNumber = document.getElementById('idNumber').value.trim();
-    const cor = document.getElementById('corUpload').files[0];
-    const notes = document.getElementById('applicationNotes').value;
-    
-    // Require at least one file
-    if (!idPicture && !cor) {
-        showToast('Please upload at least one document (ID Picture or COR)', 'error');
-        return;
-    }
-
-    // Build a single application bundling provided documents
-    const attachedDocuments = [];
-    let combinedTypeLabels = [];
-    let representativeFileName = 'Multiple files';
-
-    if (idPicture) {
-        combinedTypeLabels.push('ID Picture');
-        attachedDocuments.push({ type: 'ID Picture', fileName: idPicture.name, fileDataUrl: null });
-        representativeFileName = idPicture.name;
-    }
-    if (cor) {
-        combinedTypeLabels.push('COR');
-        attachedDocuments.push({ type: 'COR', fileName: cor.name, fileDataUrl: null });
-        representativeFileName = idPicture ? 'Multiple files' : cor.name;
-    }
-    if (idNumber) {
-        combinedTypeLabels.push('ID Number');
-    }
-
-    const newApplication = {
-        id: applications.length + 1,
-        studentId: currentUser.studentData.id,
-        documentType: combinedTypeLabels.join(' + '),
-        fileName: representativeFileName,
-        notes: notes,
-        status: 'pending',
-        submittedDate: new Date().toISOString().split('T')[0],
-        reviewedDate: null,
-        reviewerNotes: null,
-        fileDataUrl: null,
-        documentFiles: attachedDocuments
-    };
-    applications.push(newApplication);
-
-    // Store data URLs for preview and save student's ID picture if provided
-    const processFileToDataUrl = (file, indexInDocs) => {
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            if (newApplication.documentFiles && newApplication.documentFiles[indexInDocs]) {
-                newApplication.documentFiles[indexInDocs].fileDataUrl = e.target.result;
-            }
-            if (indexInDocs !== null && newApplication.documentFiles[indexInDocs].type === 'ID Picture') {
-                const studentIndex = students.findIndex(s => s.id === currentUser.studentData.id);
-                students[studentIndex].idPictureDataUrl = e.target.result;
-            }
-        };
-        reader.readAsDataURL(file);
-    };
-
-    // Read files
-    if (idPicture) processFileToDataUrl(idPicture, 0);
-    if (cor) processFileToDataUrl(cor, idPicture ? 1 : 0);
-    
-    // Update student status
-    const studentIndex = students.findIndex(s => s.id === currentUser.studentData.id);
-    students[studentIndex].applicationStatus = 'pending';
-    currentUser.studentData.applicationStatus = 'pending';
-    localStorage.setItem('currentUser', JSON.stringify(currentUser));
-    
-    // Add notification
-    addNotification(currentUser.studentData.id, 'Application Submitted', 
-        'Your documents have been submitted and are under review.');
-    
-    showToast('Application submitted successfully!', 'success');
-    
-    // Reset form
-    document.getElementById('applicationNotes').value = '';
-    const idPictureInput = document.getElementById('idPictureUpload');
-    const idCardInput = document.getElementById('idNumber');
-    const corInput = document.getElementById('corUpload');
-    if (idPictureInput) idPictureInput.value = '';
-    if (idCardInput) idCardInput.value = '';
-    if (corInput) corInput.value = '';
-    
-    // Reload dashboard
-    loadStudentDashboard();
-}
 
 // (Removed legacy showStudentTab for #student-dashboard to avoid conflicts)
 
@@ -914,8 +798,6 @@ function loadAdminDashboard() {
     // Load admin posts
     loadAdminPosts();
     
-    // Load applications
-    loadApplications();
     
     // Load students
     loadStudents();
@@ -924,51 +806,6 @@ function loadAdminDashboard() {
     initializeChat();
 }
 
-function loadApplications() {
-    const container = document.getElementById('applicationsContainer');
-    const filteredApplications = filterApplicationsByStatus().filter(app => app && app.documentType);
-    
-    if (filteredApplications.length === 0) {
-        container.innerHTML = '<p class="no-data">No applications found.</p>';
-        return;
-    }
-    
-    container.innerHTML = filteredApplications.map(app => {
-        const student = students.find(s => s.id === app.studentId) || { firstName: '', lastName: '', studentId: '' };
-        return `
-            <div class="application-item">
-                <div class="application-header">
-                    <h4>${student.firstName} ${student.lastName}</h4>
-                    <span class="status-badge status-${app.status}">${app.status}</span>
-                </div>
-                <div class="application-info">
-                    <div class="info-item">
-                        <span class="info-label">Student ID</span>
-                        <span class="info-value">${student.studentId}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Document Type</span>
-                        <span class="info-value">${app.documentType}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Submitted Date</span>
-                        <span class="info-value">${formatDate(app.submittedDate)}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Status</span>
-                        <span class="info-value">${app.status}</span>
-                    </div>
-                </div>
-                <div class="application-actions">
-                    ${app.status === 'pending' ? 
-                        `<button class="btn btn-primary" onclick="reviewApplication(${app.id})">Review</button>` : 
-                        `<button class="btn btn-secondary" onclick="viewApplicationDetails(${app.id})">View Details</button>`
-                    }
-                </div>
-            </div>
-        `;
-    }).join('');
-}
 
 function loadStudents() {
     const container = document.getElementById('studentsContainer');
@@ -1271,93 +1108,6 @@ function abbreviateDepartment(name) {
         .trim();
 }
 
-// Application Management Functions
-function reviewApplication(applicationId) {
-    const application = applications.find(a => a.id === applicationId);
-    const student = students.find(s => s.id === application.studentId);
-    
-    currentApplicationId = applicationId;
-    
-    document.getElementById('applicationDetails').innerHTML = `
-        <div class="application-details">
-            <h4>Application Details</h4>
-            <div class="detail-row">
-                <strong>Student:</strong> ${student.firstName} ${student.lastName} (${student.studentId})
-            </div>
-            <div class="detail-row">
-                <strong>Document Type:</strong> ${application.documentType}
-            </div>
-            <div class="detail-row">
-                <strong>File:</strong> ${application.fileName}
-            </div>
-            <div class="detail-row">
-                <strong>Notes:</strong> ${application.notes || 'No additional notes'}
-            </div>
-            <div class="detail-row">
-                <strong>Submitted:</strong> ${formatDate(application.submittedDate)}
-            </div>
-            <div class="detail-row attachments">
-                <strong>Attachments:</strong>
-                <div class="attachments-grid">
-                    ${(application.documentFiles && application.documentFiles.length > 0) ? application.documentFiles.map(doc => `
-                        <div class="attachment-card">
-                            <div class="attachment-title">${doc.type}</div>
-                            ${doc.fileDataUrl ? (
-                                (doc.fileName || '').toLowerCase().endsWith('.pdf')
-                                    ? `<iframe src="${doc.fileDataUrl}" class="attachment-preview"></iframe>`
-                                    : `<img src="${doc.fileDataUrl}" alt="${doc.fileName || 'file'}" class="attachment-preview">`
-                            ) : `<div class=\"attachment-fallback\">${doc.fileName || 'No preview available'}</div>`}
-                            ${doc.fileName ? `<div class="attachment-filename">${doc.fileName}</div>` : ''}
-                        </div>
-                    `).join('') : `
-                        <div class="attachment-card">
-                            <div class="attachment-fallback">No attachments</div>
-                        </div>
-                    `}
-                </div>
-            </div>
-        </div>
-    `;
-    
-    document.getElementById('reviewModal').style.display = 'block';
-}
-
-function updateApplicationStatus(status) {
-    if (!currentApplicationId) return;
-    
-    const applicationIndex = applications.findIndex(a => a.id === currentApplicationId);
-    const studentIndex = students.findIndex(s => s.id === applications[applicationIndex].studentId);
-    
-    // Update application
-    applications[applicationIndex].status = status;
-    applications[applicationIndex].reviewedDate = new Date().toISOString().split('T')[0];
-    applications[applicationIndex].reviewerNotes = status === 'approved' ? 'Application approved' : 'Application rejected';
-    
-    // Update student status
-    students[studentIndex].applicationStatus = status;
-    
-    // Add notification
-    const student = students[studentIndex];
-    addNotification(student.id, 
-        status === 'approved' ? 'Application Approved' : 'Application Rejected',
-        status === 'approved' ? 
-            'Congratulations! Your subsidy application has been approved.' :
-            'Your subsidy application has been rejected. Please contact the office for more information.'
-    );
-    
-    closeModal();
-    loadApplications();
-    loadAdminDashboard(); // Refresh stats
-    
-    showToast(`Application ${status} successfully!`, 'success');
-}
-
-function viewApplicationDetails(applicationId) {
-    const application = applications.find(a => a.id === applicationId);
-    const student = students.find(s => s.id === application.studentId);
-    
-    alert(`Application Details:\n\nStudent: ${student.firstName} ${student.lastName}\nDocument: ${application.documentType}\nStatus: ${application.status}\nSubmitted: ${formatDate(application.submittedDate)}\nReviewed: ${application.reviewedDate ? formatDate(application.reviewedDate) : 'Not reviewed'}\nNotes: ${application.notes || 'None'}`);
-}
 
 function openStudentProfileModal(studentId) {
     const student = students.find(s => s.id === studentId);
@@ -1544,35 +1294,6 @@ function deleteStudent(studentId) {
 }
 
 // Filter Functions
-function filterApplications() {
-    loadApplications();
-}
-
-function filterApplicationsByStatus() {
-    const statusFilter = document.getElementById('statusFilter').value;
-    const searchTerm = document.getElementById('searchStudents').value.toLowerCase();
-    
-    let filtered = applications;
-    
-    if (statusFilter) {
-        filtered = filtered.filter(app => app.status === statusFilter);
-    }
-    
-    if (searchTerm) {
-        filtered = filtered.filter(app => {
-            const student = students.find(s => s.id === app.studentId);
-            return student.firstName.toLowerCase().includes(searchTerm) || 
-                   student.lastName.toLowerCase().includes(searchTerm) ||
-                   student.studentId.toLowerCase().includes(searchTerm);
-        });
-    }
-    
-    return filtered;
-}
-
-function searchApplications() {
-    loadApplications();
-}
 
 function filterStudents() {
     loadStudents();
@@ -1798,18 +1519,7 @@ function showToast(message, type = 'info') {
     }, 3000);
 }
 
-function closeModal() {
-    document.getElementById('reviewModal').style.display = 'none';
-    currentApplicationId = null;
-}
 
-// Close modal when clicking outside
-window.onclick = function(event) {
-    const modal = document.getElementById('reviewModal');
-    if (event.target === modal) {
-        closeModal();
-    }
-}
 
 // Export data functions (for demo purposes)
 function exportStudents() {
@@ -1822,15 +1532,6 @@ function exportStudents() {
     link.click();
 }
 
-function exportApplications() {
-    const dataStr = JSON.stringify(applications, null, 2);
-    const dataBlob = new Blob([dataStr], {type: 'application/json'});
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'applications.json';
-    link.click();
-}
 
 // Chat Functions
 function toggleChat() {
@@ -3343,81 +3044,6 @@ function archiveStudent(studentId) {
     }
 }
 
-// Application Management Functions
-function reviewApplication(applicationId) {
-    const application = applications.find(app => app.id === applicationId);
-    if (!application) return;
-    
-    currentApplicationId = applicationId;
-    
-    // Populate modal with application details
-    const detailsContainer = document.getElementById('applicationDetails');
-    detailsContainer.innerHTML = `
-        <div class="application-details">
-            <h4>Application Details</h4>
-            <div class="detail-row">
-                <strong>Name:</strong>
-                <span>${application.firstName} ${application.lastName}</span>
-            </div>
-            <div class="detail-row">
-                <strong>Student ID:</strong>
-                <span>${application.studentId}</span>
-            </div>
-            <div class="detail-row">
-                <strong>Email:</strong>
-                <span>${application.email}</span>
-            </div>
-            <div class="detail-row">
-                <strong>Course:</strong>
-                <span>${application.course}</span>
-            </div>
-            <div class="detail-row">
-                <strong>Year Level:</strong>
-                <span>${application.year}</span>
-            </div>
-            <div class="detail-row">
-                <strong>Applied Date:</strong>
-                <span>${formatDate(application.appliedDate)}</span>
-            </div>
-            <div class="detail-row">
-                <strong>Status:</strong>
-                <span class="status-badge status-${application.status}">${application.status.toUpperCase()}</span>
-            </div>
-        </div>
-    `;
-    
-    // Show modal
-    document.getElementById('reviewModal').style.display = 'block';
-}
-
-function updateApplicationStatus(applicationId, status) {
-    const application = applications.find(app => app.id === applicationId);
-    if (!application) return;
-    
-    application.status = status;
-    application.reviewedDate = new Date().toISOString();
-    
-    // Save to localStorage
-    localStorage.setItem('applications', JSON.stringify(applications));
-    
-    // Reload applications
-    loadApplications();
-    
-    // Close modal if open
-    closeModal();
-    
-    // Show success message
-    showToast(`Application ${status} successfully!`, 'success');
-}
-
-// Filter and Search Functions
-function filterApplications() {
-    loadApplications();
-}
-
-function searchApplications() {
-    loadApplications();
-}
 
 function filterStudents() {
     loadStudents();
