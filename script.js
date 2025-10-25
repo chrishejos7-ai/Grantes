@@ -83,11 +83,39 @@ function initializeApp() {
     }
     
     loadPersistedChatMessages();
+    // Load notifications from storage
+    try {
+        const savedNotifs = localStorage.getItem('notifications');
+        if (savedNotifs) {
+            const parsed = JSON.parse(savedNotifs);
+            if (Array.isArray(parsed)) notifications = parsed;
+        }
+    } catch (_) { /* ignore */ }
+
+    // Ensure admin credentials exist (defaults if not configured)
+    ensureAdminCredentials();
     
     // Check if user is already logged in
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
         currentUser = JSON.parse(savedUser);
+        // Guard: prevent archived students from auto-login sessions
+        if (currentUser && currentUser.role === 'student') {
+            try {
+                const storedStudents = JSON.parse(localStorage.getItem('students') || '[]');
+                const match = storedStudents.find(s => (
+                    (typeof currentUser.id === 'number' && s.id === currentUser.id) ||
+                    (s.email && currentUser.email && String(s.email).toLowerCase() === String(currentUser.email).toLowerCase())
+                ));
+                if (match && (match.status || 'active') === 'archived') {
+                    currentUser = null;
+                    localStorage.removeItem('currentUser');
+                    showToast('Your account is archived. Please contact admin to reactivate.', 'error');
+                    showLogin();
+                    return;
+                }
+            } catch (_) { /* ignore */ }
+        }
         if (document && document.body) {
             document.body.classList.add('logged-in');
             if (currentUser.role === 'admin') {
@@ -103,6 +131,35 @@ function initializeApp() {
     
     // Generate sample notifications
     generateSampleNotifications();
+}
+
+// Admin credentials helpers
+function ensureAdminCredentials() {
+    try {
+        const stored = JSON.parse(localStorage.getItem('adminCredentials') || 'null');
+        if (!stored || !stored.email || !stored.password) {
+            const defaults = { email: 'admin@grantes.com', password: 'admin123' };
+            localStorage.setItem('adminCredentials', JSON.stringify(defaults));
+        }
+    } catch (e) {
+        // fallback: write defaults
+        try { localStorage.setItem('adminCredentials', JSON.stringify({ email: 'admin@grantes.com', password: 'admin123' })); } catch (_) {}
+    }
+}
+
+function getAdminCredentials() {
+    try {
+        const stored = JSON.parse(localStorage.getItem('adminCredentials') || 'null');
+        if (stored && typeof stored.email === 'string' && typeof stored.password === 'string') {
+            return stored;
+        }
+    } catch (_) {}
+    return { email: 'admin@grantes.com', password: 'admin123' };
+}
+
+function setAdminCredentials(email, password) {
+    const creds = { email: String(email || '').trim(), password: String(password || '') };
+    localStorage.setItem('adminCredentials', JSON.stringify(creds));
 }
 
 // Navigation Functions
@@ -191,6 +248,7 @@ function handleRegister(event) {
         email: document.getElementById('registerEmail').value,
         password: document.getElementById('registerPassword').value,
         confirmPassword: document.getElementById('confirmPassword').value,
+        department: document.getElementById('department').value,
         course: document.getElementById('course').value,
         year: document.getElementById('year').value
     };
@@ -221,6 +279,7 @@ function handleRegister(event) {
         studentId: formData.studentId,
         email: formData.email,
         password: formData.password, // In real app, this should be hashed
+        department: formData.department,
         course: formData.course,
         year: formData.year,
         status: 'active',
@@ -233,14 +292,16 @@ function handleRegister(event) {
     showLogin();
 }
 
-// Home Feed: Render admin posts where audience === 'home' in Facebook-like cards
+// Enhanced Home Feed: Render admin posts where audience === 'home' in modern cards
 function loadHomeFeed() {
     const feedEl = document.getElementById('homeFeed');
     if (!feedEl) return;
+
     // Read from adminPosts; fallback to legacy 'posts' if present, then merge
     const storedAdminPosts = JSON.parse(localStorage.getItem('adminPosts') || '[]');
     const legacyPosts = JSON.parse(localStorage.getItem('posts') || '[]');
     const allPosts = [...storedAdminPosts, ...legacyPosts];
+
     // Accept both 'home' and 'Home Page' values (legacy), and be lenient on casing
     const homePosts = allPosts.filter(p => {
         if (!p) return false;
@@ -248,8 +309,10 @@ function loadHomeFeed() {
         // Include posts with audience 'home'/'home page' or no audience (legacy)
         return audRaw === '' || audRaw === 'home' || audRaw === 'home page';
     }).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
     // Fallback: if no Home-specific posts, show latest recent posts so something appears
     const postsToRender = (homePosts.length > 0 ? homePosts : allPosts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))).slice(0, 10);
+
     if (postsToRender.length === 0) {
         feedEl.innerHTML = `
             <div class="welcome-message">
@@ -259,9 +322,9 @@ function loadHomeFeed() {
         `;
         return;
     }
+
     feedEl.innerHTML = postsToRender.map(post => {
         const aud = ((post && post.audience) ? post.audience.toString().toLowerCase() : '');
-        const badgeText = aud === 'students' ? 'GranTES Students' : 'Home Page';
         const ts = post && post.timestamp ? post.timestamp : new Date().toISOString();
         const author = (post && post.author) ? post.author : 'Administrator';
         const content = (post && post.content) ? post.content : '';
@@ -288,6 +351,7 @@ function loadHomeFeed() {
         </div>`;
     }).join('');
 }
+
 
 // Ensure Home feed renders on initial page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -330,12 +394,18 @@ function handleLogin(event) {
     
     console.log('Login attempt:', { role, email, password });
     
-    // First, accept admin credentials regardless of selected role to avoid UX issues
-    if ((email === 'admin@grantes.com' || email === 'admin@grantes.local') && password === 'admin123') {
+    // First, accept admin credentials regardless of selected role
+    const configuredAdmin = getAdminCredentials();
+    const adminEmails = new Set([
+        (configuredAdmin.email || '').toLowerCase(),
+        'admin@grantes.local',
+        'admin'
+    ]);
+    if (adminEmails.has(email) && password === configuredAdmin.password) {
         currentUser = {
             id: 'admin',
             name: 'Administrator',
-            email: email,
+            email: configuredAdmin.email,
             role: 'admin'
         };
         if (!safeSetItem('currentUser', JSON.stringify(currentUser))) {
@@ -344,7 +414,7 @@ function handleLogin(event) {
         if (document && document.body) {
             document.body.classList.add('logged-in');
             document.body.classList.add('admin-logged-in');
-        }
+        } 
         try { updateNavigation(); } catch (_) { /* ignore */ }
         showToast('Login successful!', 'success');
         showDashboard();
@@ -352,12 +422,18 @@ function handleLogin(event) {
     }
 
     if (role === 'admin') {
-        // Admin login (hardcoded for demo)
-        if ((email === 'admin@grantes.com' || email === 'admin@grantes.local') && password === 'admin123') {
+        // Admin login via configured credentials
+        const configured = getAdminCredentials();
+        const allowedEmails = new Set([
+            (configured.email || '').toLowerCase(),
+            'admin@grantes.local',
+            'admin'
+        ]);
+        if (allowedEmails.has(email) && password === configured.password) {
             currentUser = {
                 id: 'admin',
                 name: 'Administrator',
-                email: email,
+                email: configured.email,
                 role: 'admin'
             };
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
@@ -394,6 +470,12 @@ function handleLogin(event) {
         });
         
         if (student) {
+            // Block archived accounts from logging in
+            const status = (student.status || 'active').toLowerCase();
+            if (status === 'archived') {
+                showToast('Your account has been archived. Please contact the administrator to reactivate.', 'error');
+                return;
+            }
             // Ensure student has a numeric id saved for downstream features
             const ensured = ensureStudentHasId(student);
             currentUser = {
@@ -473,8 +555,13 @@ function loadStudentHomepage() {
     document.getElementById('studentName').textContent = student.firstName + ' ' + student.lastName;
     
     // Update notification count
-    const studentNotifications = notifications.filter(n => n.studentId === student.id);
-    document.getElementById('studentNotificationCount').textContent = studentNotifications.length;
+    // Reload notifications from storage to reflect new ones
+    try {
+        const savedNotifs = JSON.parse(localStorage.getItem('notifications') || '[]');
+        if (Array.isArray(savedNotifs)) notifications = savedNotifs;
+    } catch (_) {}
+    const unreadNotifs = notifications.filter(n => n.studentId === student.id && !n.read);
+    document.getElementById('studentNotificationCount').textContent = unreadNotifs.length;
     
     // Update message count (guard if element not present in sidebar)
     const studentMessages = JSON.parse(localStorage.getItem('studentMessages') || '[]');
@@ -537,6 +624,10 @@ function loadStudentProfile() {
     if (emailMain) emailMain.textContent = student.email;
     const courseMain = document.getElementById('profileCourseMain');
     if (courseMain) courseMain.textContent = student.course;
+    const deptMain = document.getElementById('profileDepartmentMain');
+    if (deptMain) deptMain.textContent = student.department || '';
+    const placeMain = document.getElementById('profilePlaceMain');
+    if (placeMain) placeMain.textContent = student.place || '';
     const yearMain = document.getElementById('profileYearMain');
     if (yearMain) yearMain.textContent = student.year;
     const awardMain = document.getElementById('profileAwardNumberMain');
@@ -553,6 +644,8 @@ function loadStudentProfile() {
     const pwdMain = document.getElementById('profilePwdMain');
     if (pwdMain) pwdMain.textContent = student.isPwd ? 'Yes' : 'No';
 }
+
+// Removed Student Account Settings modal and handlers per request
 
 function loadStudentAnnouncements() {
     const adminPosts = JSON.parse(localStorage.getItem('adminPosts') || '[]');
@@ -591,7 +684,11 @@ function loadStudentAnnouncements() {
                     </div>
                 </div>
                 <div class="post-content">
+                    ${Array.isArray(post.images) && post.images.length > 1 ? renderCarousel(post.images) : (post.image ? `<div class="post-image"><img src="${post.image}" alt="post image"></div>` : '')}
                     <div class="post-text">${post.content}</div>
+                    ${post.type === 'media' ? '<div class="post-media"><i class="fas fa-image"></i> Media attached</div>' : ''}
+                    ${post.type === 'live' ? '<div class="post-live"><i class="fas fa-video"></i> Live video</div>' : ''}
+                    ${post.type === 'feeling' ? '<div class="post-feeling"><i class="fas fa-smile"></i> Feeling/Activity</div>' : ''}
                 </div>
                 <div class="post-actions">
                     <button class="post-action-btn ${likedByCurrent ? 'liked' : ''}" onclick="togglePostLike(${post.id})">
@@ -673,7 +770,12 @@ function loadStudentMessages() {
 
 function loadStudentNotifications() {
     const container = document.getElementById('notificationsContainer');
-    const studentNotifications = notifications.filter(n => n.studentId === currentUser.studentData.id);
+    // Ensure we have the latest persisted notifications
+    try {
+        const savedNotifs = JSON.parse(localStorage.getItem('notifications') || '[]');
+        if (Array.isArray(savedNotifs)) notifications = savedNotifs;
+    } catch (_) {}
+    const studentNotifications = notifications.filter(n => n.studentId === currentUser.studentData.id && !n.read);
     
     if (studentNotifications.length === 0) {
         container.innerHTML = '<p class="no-notifications">No notifications yet.</p>';
@@ -790,20 +892,24 @@ function loadAdminDashboard() {
     const storedStudents = JSON.parse(localStorage.getItem('students') || '[]');
     students = storedStudents;
     
-    // Update stats (map: Indigenous -> isIndigenous, PWD's -> isPwd)
-    document.getElementById('totalStudents').textContent = students.length;
+    // Update stats (Only count ACTIVE students for totals/IP/PWDs; Archived shown separately)
+    const activeStudents = students.filter(s => (s.status || 'active') === 'active');
+    document.getElementById('totalStudents').textContent = activeStudents.length;
     document.getElementById('totalApproved').textContent = 
-        students.filter(s => s.isIndigenous).length;
+        activeStudents.filter(s => s.isIndigenous).length;
     document.getElementById('totalPending').textContent = 
-        students.filter(s => s.isPwd).length;
+        activeStudents.filter(s => s.isPwd).length;
     document.getElementById('totalArchived').textContent = 
-        students.filter(s => s.status === 'archived').length;
+        students.filter(s => (s.status || 'active') === 'archived').length;
     
     // Show admin homepage by default
     const adminHomepage = document.getElementById('admin-homepage');
-    const tabContent = document.querySelector('.tab-content');
+    const adminSection = document.getElementById('admin-dashboard');
+    const tabContent = adminSection ? adminSection.querySelector('.tab-content') : document.querySelector('.tab-content');
+    const navTabs = adminSection ? adminSection.querySelector('.admin-nav-tabs') : null;
     adminHomepage.style.display = 'block';
     tabContent.style.display = 'none';
+    if (navTabs) navTabs.style.display = 'none';
     
     // Load admin posts
     loadAdminPosts();
@@ -931,6 +1037,9 @@ function openManageStudents() {
     if (navTabs) {
         navTabs.style.display = 'none';
     }
+    // Ensure default view is active when opening Manage Students directly
+    studentsViewFilter = 'active';
+    loadStudents();
 }
 
 // Show Profile panel when clicking the sidebar profile card header
@@ -980,12 +1089,35 @@ function openStudentMessages() {
         // Ensure messages render
         setTimeout(loadStudentMessages, 0);
     }
+
+    // Mark all notifications as read for this student and update count
+    try {
+        const currentId = currentUser && currentUser.studentData ? currentUser.studentData.id : null;
+        if (currentId != null) {
+            let list = JSON.parse(localStorage.getItem('notifications') || '[]');
+            let changed = false;
+            list = list.map(n => {
+                if (n && n.studentId === currentId && !n.read) { changed = true; return { ...n, read: true }; }
+                return n;
+            });
+            if (changed) {
+                notifications = list;
+                localStorage.setItem('notifications', JSON.stringify(list));
+                const countEl = document.getElementById('studentNotificationCount');
+                if (countEl) countEl.textContent = '0';
+            }
+        }
+    } catch (_) { /* ignore */ }
 }
 
 function loadReports() {
     // Simple chart implementation (in a real app, you'd use a charting library)
     const applicationChart = document.getElementById('applicationChart');
     const trendChart = document.getElementById('trendChart');
+    const departmentChart = document.getElementById('departmentChart');
+    const departmentSummary = document.getElementById('departmentSummary');
+    const placeChart = document.getElementById('placeChart');
+    const placeSummary = document.getElementById('placeSummary');
     
     if (applicationChart && trendChart) {
         drawSimpleChart(applicationChart, {
@@ -1001,9 +1133,76 @@ function loadReports() {
             apr: 15
         });
     }
+
+    // Department analysis (ACTIVE students only)
+    if (departmentChart && departmentSummary) {
+        const storedStudents = JSON.parse(localStorage.getItem('students') || '[]');
+        const active = storedStudents.filter(s => (s.status || 'active') === 'active');
+        const deptCounts = active.reduce((acc, s) => {
+            const dept = (s && s.department) ? s.department : 'Unspecified';
+            acc[dept] = (acc[dept] || 0) + 1;
+            return acc;
+        }, {});
+        if (Object.keys(deptCounts).length === 0) {
+            departmentSummary.innerHTML = '<p class="no-data">No department data available.</p>';
+        } else {
+            // Render chart
+            drawSimpleChart(departmentChart, deptCounts);
+            // Render summary list
+            const total = Object.values(deptCounts).reduce((a, b) => a + b, 0);
+            const sorted = Object.entries(deptCounts).sort((a, b) => b[1] - a[1]);
+            departmentSummary.innerHTML = `
+                <ul class="dept-summary-list">
+                    ${sorted.map(([name, count], idx) => {
+                        const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                        const color = `hsl(${(idx * 53) % 360}, 70%, 55%)`;
+                        const abbr = abbreviateDepartment(name);
+                        return `<li title="${name}">
+                            <span class="dept-color-dot" style="background:${color}"></span>
+                            <span class="dept-name">${abbr}</span>
+                            <span class="dept-count">${count} (${pct}%)</span>
+                        </li>`;
+                    }).join('')}
+                </ul>
+            `;
+        }
+    }
 }
 
-function drawSimpleChart(canvas, data) {
+// Place (From) analysis (counts and percentage summary) - ACTIVE students only
+if (placeChart && placeSummary) {
+    const storedStudents = JSON.parse(localStorage.getItem('students') || '[]');
+    const active = storedStudents.filter(s => (s.status || 'active') === 'active');
+    const placeCounts = active.reduce((acc, s) => {
+        const place = (s && s.place && s.place.trim()) ? s.place.trim() : 'Unspecified';
+        acc[place] = (acc[place] || 0) + 1;
+        return acc;
+    }, {});
+        if (Object.keys(placeCounts).length === 0) {
+            placeSummary.innerHTML = '<p class="no-data">No origin data available.</p>';
+            const ctx = placeChart.getContext('2d');
+            ctx.clearRect(0, 0, placeChart.width, placeChart.height);
+        } else {
+            drawSimpleChart(placeChart, placeCounts);
+            const total = Object.values(placeCounts).reduce((a, b) => a + b, 0);
+            const sorted = Object.entries(placeCounts).sort((a, b) => b[1] - a[1]).slice(0, 12);
+            placeSummary.innerHTML = `
+                <ul class="dept-summary-list">
+                    ${sorted.map(([name, count], idx) => {
+                        const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                        const color = `hsl(${(idx * 53) % 360}, 70%, 55%)`;
+                        return `<li title="${name}">
+                            <span class="dept-color-dot" style="background:${color}"></span>
+                            <span class="dept-name">${name}</span>
+                            <span class="dept-count">${count} (${pct}%)</span>
+                        </li>`;
+                    }).join('')}
+                </ul>
+            `;
+        }
+    }
+
+function drawSimpleChart(canvas, data, opts) {
     const ctx = canvas.getContext('2d');
     const width = canvas.width;
     const height = canvas.height;
@@ -1011,22 +1210,65 @@ function drawSimpleChart(canvas, data) {
     ctx.clearRect(0, 0, width, height);
     
     const maxValue = Math.max(...Object.values(data));
-    const barWidth = width / Object.keys(data).length - 10;
+    const labels = Object.keys(data);
+    const values = Object.values(data);
+    const count = labels.length;
+    const padding = 10;
+    const barWidth = Math.max(20, Math.floor(width / count) - padding);
+    const labelColor = '#374151';
+    const hideLabels = !!(opts && opts.hideLabels);
+    const labelFormatter = (opts && typeof opts.labelFormatter === 'function') ? opts.labelFormatter : (t) => t;
     
-    Object.entries(data).forEach(([key, value], index) => {
-        const barHeight = (value / maxValue) * (height - 40);
-        const x = index * (barWidth + 10) + 5;
-        const y = height - barHeight - 20;
-        
-        ctx.fillStyle = `hsl(${index * 120}, 70%, 50%)`;
+    labels.forEach((key, index) => {
+        const value = values[index];
+        const bottomSpace = hideLabels ? 8 : 18;
+        const barHeight = maxValue > 0 ? (value / maxValue) * (height - (32 + bottomSpace)) : 0;
+        const x = index * (barWidth + padding) + 5;
+        const y = height - barHeight - (16 + bottomSpace);
+
+        // Bar color with spaced hues for readability
+        ctx.fillStyle = `hsl(${(index * 53) % 360}, 70%, 55%)`;
         ctx.fillRect(x, y, barWidth, barHeight);
-        
-        ctx.fillStyle = '#333';
+
+        // Value label above bar
+        ctx.fillStyle = labelColor;
         ctx.font = '12px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(key, x + barWidth/2, height - 5);
-        ctx.fillText(value.toString(), x + barWidth/2, y - 5);
+        ctx.fillText(String(value), x + barWidth/2, y - 6);
+
+        // Optional label under bar
+        if (!hideLabels) {
+            const text = labelFormatter(key);
+            ctx.save();
+            ctx.fillStyle = labelColor;
+            ctx.translate(x + barWidth/2, height - 6);
+            ctx.rotate(0);
+            ctx.fillText(text, 0, 0);
+            ctx.restore();
+        }
     });
+}
+
+function abbreviateDepartment(name) {
+    if (!name) return '';
+    const mapping = {
+        'Department of Computer Studies': 'DCS',
+        'Department of Business and Management': 'DBM',
+        'Department of Industrial Technology': 'DIT',
+        'Department of General Teacher Training': 'DGTT',
+        'College of Criminal Justice Education': 'CCJE',
+        'Unspecified': 'Unspecified'
+    };
+    if (mapping[name]) return mapping[name];
+    // Generic fallback: collapse common prefixes and shorten words
+    return name
+        .replace(/^Department of\s+/i, '')
+        .replace(/and/gi, '&')
+        .replace(/Education/gi, 'Edu')
+        .replace(/Management/gi, 'Mgmt')
+        .replace(/Technology/gi, 'Tech')
+        .replace(/General/gi, 'Gen')
+        .trim();
 }
 
 // Application Management Functions
@@ -1127,6 +1369,10 @@ function openStudentProfileModal(studentId) {
     document.getElementById('adminStudentEmail').textContent = student.email;
     // Keep the header meta showing the correct Student ID (not award number)
     document.getElementById('adminStudentId').textContent = student.studentId || '';
+    const adminDeptEl = document.getElementById('adminStudentDepartment');
+    if (adminDeptEl) { adminDeptEl.textContent = student.department || ''; }
+    const adminPlaceEl = document.getElementById('adminStudentPlace');
+    if (adminPlaceEl) { adminPlaceEl.textContent = student.place || ''; }
     document.getElementById('adminStudentCourse').textContent = student.course;
     document.getElementById('adminStudentYear').textContent = student.year;
     const adminStudentIdValueEl = document.getElementById('adminStudentIdValue');
@@ -1170,7 +1416,9 @@ function renderAdminStudentChat() {
     const container = document.getElementById('adminStudentChatMessages');
     if (!container) return;
     container.innerHTML = '';
-    const thread = chatMessages.filter(m => m.studentId === adminActiveChatStudentId);
+    const thread = chatMessages
+        .filter(m => m.studentId === adminActiveChatStudentId)
+        .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
     if (thread.length === 0) {
         container.innerHTML = `
             <div class="chat-welcome">
@@ -1184,7 +1432,11 @@ function renderAdminStudentChat() {
         return;
     }
     thread.forEach(m => addMessageToAdminChat(container, m));
-    container.scrollTop = container.scrollHeight;
+    // Ensure we scroll to the latest message after layout/paint
+    const scrollToBottom = () => { try { container.scrollTop = container.scrollHeight; } catch (_) {} };
+    scrollToBottom();
+    requestAnimationFrame(scrollToBottom);
+    setTimeout(scrollToBottom, 0);
 }
 
 function addMessageToAdminChat(container, message) {
@@ -1220,9 +1472,14 @@ function adminSendChatMessage() {
     
     // Add notification for student
     addNotification(adminActiveChatStudentId, 'New Message from Admin', text);
+    try { localStorage.setItem('notifications', JSON.stringify(notifications)); } catch (_) {}
     
     renderAdminStudentChat();
     input.value = '';
+    try {
+        const container = document.getElementById('adminStudentChatMessages');
+        if (container) container.scrollTop = container.scrollHeight;
+    } catch (_) { /* ignore */ }
     
     // Update student's profile chat if they're viewing it
     if (currentUser && currentUser.role === 'student' && currentUser.studentData.id === adminActiveChatStudentId) {
@@ -1249,8 +1506,10 @@ function archiveStudent(studentId) {
     if (confirm('Are you sure you want to archive this student?')) {
         const studentIndex = students.findIndex(s => s.id === studentId);
         students[studentIndex].status = 'archived';
+        localStorage.setItem('students', JSON.stringify(students));
         loadStudents();
         loadAdminDashboard();
+        try { loadReports(); } catch (_) { /* ignore */ }
         showToast('Student archived successfully!', 'success');
     }
 }
@@ -1258,8 +1517,10 @@ function archiveStudent(studentId) {
 function activateStudent(studentId) {
     const studentIndex = students.findIndex(s => s.id === studentId);
     students[studentIndex].status = 'active';
+    localStorage.setItem('students', JSON.stringify(students));
     loadStudents();
     loadAdminDashboard();
+    try { loadReports(); } catch (_) { /* ignore */ }
     showToast('Student activated successfully!', 'success');
 }
 
@@ -1317,8 +1578,11 @@ function filterStudents() {
     loadStudents();
 }
 
+// Global view state for Students tab; default to 'active'. 'archived' is set by viewArchived().
+let studentsViewFilter = 'active';
+
 function filterStudentsByStatus() {
-    const statusFilter = document.getElementById('studentStatusFilter').value;
+    const statusFilter = studentsViewFilter || 'active';
     const searchTerm = (document.getElementById('searchStudentRecords').value || '').trim().toLowerCase();
     
     // Load students from localStorage as single source of truth
@@ -1327,9 +1591,8 @@ function filterStudentsByStatus() {
     
     let filtered = students;
     
-    if (statusFilter) {
-        filtered = filtered.filter(student => (student.status || 'active') === statusFilter);
-    }
+    // Always apply filter; default active if unspecified
+    filtered = filtered.filter(student => (student.status || 'active') === statusFilter);
     
     if (searchTerm) {
         filtered = filtered.filter(student => 
@@ -1346,17 +1609,142 @@ function filterStudentsByStatus() {
     return filtered;
 }
 
+// Quick view: show archived students list and jump to Students tab
+function viewArchived() {
+    // Switch to Students tab
+    try { showAdminTab('students'); } catch (_) {}
+    const navTabs = document.querySelector('.admin-nav-tabs');
+    if (navTabs) navTabs.style.display = 'flex';
+    // Set filter to archived and reload
+    studentsViewFilter = 'archived';
+    // Clear search for full list
+    const searchEl = document.getElementById('searchStudentRecords');
+    if (searchEl) searchEl.value = '';
+    loadStudents();
+}
+
 function searchStudents() {
     loadStudents();
 }
 
 // Settings Functions
 function updateSettings() {
-    const subsidyTypes = document.getElementById('subsidyTypes').value;
-    const systemMessage = document.getElementById('systemMessage').value;
-    
-    // In a real app, this would save to backend
+    // Removed subsidy types and system message; only handle admin credentials and student credential updates
+    const adminEmailEl = document.getElementById('adminEmailSetting');
+    const adminPasswordEl = document.getElementById('adminPasswordSetting');
+    const adminPasswordConfirmEl = document.getElementById('adminPasswordConfirmSetting');
+
+    // Save admin credentials if provided
+    if (adminEmailEl || adminPasswordEl || adminPasswordConfirmEl) {
+        const newEmail = (adminEmailEl && adminEmailEl.value || '').trim();
+        const newPassword = (adminPasswordEl && adminPasswordEl.value || '').trim();
+        const confirmPassword = (adminPasswordConfirmEl && adminPasswordConfirmEl.value || '').trim();
+
+        if (newEmail && !/^\S+@\S+\.\S+$/.test(newEmail)) {
+            showToast('Please enter a valid admin email address.', 'error');
+            return;
+        }
+        if (newPassword || confirmPassword) {
+            if (newPassword.length < 6) {
+                showToast('Admin password must be at least 6 characters.', 'error');
+                return;
+            }
+            if (newPassword !== confirmPassword) {
+                showToast('Admin password confirmation does not match.', 'error');
+                return;
+            }
+        }
+
+        // Merge with existing credentials
+        const existing = getAdminCredentials();
+        const mergedEmail = newEmail || existing.email;
+        const mergedPassword = newPassword ? newPassword : existing.password;
+        setAdminCredentials(mergedEmail, mergedPassword);
+    }
+
     showToast('Settings updated successfully!', 'success');
+}
+
+// Admin: Update a student's award number and/or password from Settings
+function updateStudentCredentialsFromSettings() {
+    if (!currentUser || currentUser.role !== 'admin') {
+        showToast('Not authorized.', 'error');
+        return;
+    }
+
+    const lookupEl = document.getElementById('adminStudentLookup');
+    const selectedIdEl = document.getElementById('adminSelectedStudentId');
+    const newAwardEl = document.getElementById('adminStudentNewAward');
+    const newPassEl = document.getElementById('adminStudentNewPassword');
+    const newPassConfirmEl = document.getElementById('adminStudentNewPasswordConfirm');
+
+    const identifier = (lookupEl && lookupEl.value || '').trim().toLowerCase();
+    const selectedId = selectedIdEl && selectedIdEl.value ? parseInt(selectedIdEl.value) : null;
+    const newAward = (newAwardEl && newAwardEl.value || '').trim();
+    const newPassword = (newPassEl && newPassEl.value || '').trim();
+    const confirmPassword = (newPassConfirmEl && newPassConfirmEl.value || '').trim();
+
+    if (!selectedId) {
+        showToast('Please search and select a student from the list.', 'error');
+        return;
+    }
+
+    if (!newAward && !newPassword && !confirmPassword) {
+        showToast('Nothing to update.', 'warning');
+        return;
+    }
+
+    if (newPassword || confirmPassword) {
+        if (newPassword.length < 6) {
+            showToast('Password must be at least 6 characters.', 'error');
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            showToast('Passwords do not match.', 'error');
+            return;
+        }
+    }
+
+    const stored = JSON.parse(localStorage.getItem('students') || '[]');
+    const matchIndex = stored.findIndex(s => s && s.id === selectedId);
+
+    if (matchIndex === -1) {
+        showToast('Student not found. Check the identifier and try again.', 'error');
+        return;
+    }
+
+    if (newAward) {
+        const taken = stored.some((s, i) => i !== matchIndex && s && s.awardNumber && String(s.awardNumber).toLowerCase() === newAward.toLowerCase());
+        if (taken) {
+            showToast('Award number is already in use by another account.', 'error');
+            return;
+        }
+        stored[matchIndex].awardNumber = newAward;
+    }
+    if (newPassword) {
+        stored[matchIndex].password = newPassword;
+    }
+
+    localStorage.setItem('students', JSON.stringify(stored));
+
+    // If admin is viewing Students tab, refresh list and stats
+    try { loadStudents(); } catch (_) {}
+    try { loadAdminDashboard(); } catch (_) {}
+
+    // Clear inputs and summary (keep search text)
+    if (newAwardEl) { newAwardEl.value = ''; newAwardEl.disabled = true; }
+    if (newPassEl) { newPassEl.value = ''; newPassEl.disabled = true; }
+    if (newPassConfirmEl) { newPassConfirmEl.value = ''; newPassConfirmEl.disabled = true; }
+    const showPw2 = document.getElementById('adminShowPasswords');
+    if (showPw2) { showPw2.checked = false; showPw2.disabled = true; }
+    const selectedIdEl2 = document.getElementById('adminSelectedStudentId');
+    if (selectedIdEl2) selectedIdEl2.value = '';
+    const summaryBox = document.getElementById('adminSelectedStudentSummary');
+    if (summaryBox) summaryBox.style.display = 'none';
+    const hint = document.getElementById('adminAwardValidation');
+    if (hint) { hint.textContent = ''; hint.className = 'input-hint'; }
+
+    showToast('Student account updated successfully!', 'success');
 }
 
 function generateReport() {
@@ -1376,6 +1764,7 @@ function addNotification(studentId, title, message) {
     };
     
     notifications.push(notification);
+    try { localStorage.setItem('notifications', JSON.stringify(notifications)); } catch (_) { /* ignore */ }
 }
 
 function generateSampleNotifications() {
@@ -1863,7 +2252,7 @@ function createPost(type) {
     const newPost = {
         id: Date.now(),
         author: 'Administrator',
-        content: content || `Created a ${type} post`,
+        content: content || '',
         type: type,
         audience: audience, // 'students' or 'home' (and possibly 'specific')
         course: audience === 'specific' ? course : null,
@@ -1895,6 +2284,13 @@ function createPost(type) {
     clearPostImage();
     
     loadAdminPosts();
+    // Notify all active students about new announcement
+    try {
+        const allStudents = JSON.parse(localStorage.getItem('students') || '[]');
+        const active = allStudents.filter(s => (s.status || 'active') === 'active');
+        const noteTitle = (audience === 'home') ? 'New Public Announcement' : 'New Student Announcement';
+        active.forEach(s => addNotification(s.id, noteTitle, content || '')); 
+    } catch (_) { /* ignore */ }
     // If on Home, refresh Home feed too
     if (document.getElementById('home') && document.getElementById('home').classList.contains('active')) {
         if (typeof loadHomeFeed === 'function') loadHomeFeed();
@@ -2006,6 +2402,9 @@ function loadAdminPosts() {
     if (!postsFeed) return;
     const allPosts = JSON.parse(localStorage.getItem('adminPosts') || '[]');
     
+    // Test: Show alert to confirm function is called
+    console.log('loadAdminPosts called, posts count:', allPosts.length);
+    
     if (allPosts.length === 0) {
         postsFeed.innerHTML = `
             <div class="welcome-message">
@@ -2019,22 +2418,32 @@ function loadAdminPosts() {
     postsFeed.innerHTML = allPosts.map(post => {
         const studentComments = JSON.parse(localStorage.getItem('studentComments') || '[]');
         const postComments = studentComments.filter(c => c && c.postId === post.id);
-        const commentsHtml = postComments.length
-            ? postComments.map(c => `
-                <div class=\"admin-comment-row\" style=\"padding:6px 8px; border-bottom:1px solid #e5e7eb;\">
-                    <strong>${c.author || 'Student'}</strong>: ${c.text || ''}
-                    <span style=\"color:#9ca3af; font-size:12px; margin-left:6px;\">${c.timestamp ? formatDate(c.timestamp) : ''}</span>
-                </div>
-            `).join('')
-            : '<div class=\"admin-no-comments\" style=\"color:#9ca3af; font-style:italic; padding:6px 8px;\">No student comments</div>';
-
         const likesCount = (post && post.engagement && Array.isArray(post.engagement.likes)) ? post.engagement.likes.length : (post.likes || 0);
-        const commentsHeader = `<div style="padding:8px 10px; font-weight:600; color:#111827; background:#f3f4f6; display:flex; align-items:center; gap:10px;"><span><i class="fas fa-heart" style="color:#ef4444;"></i> ${likesCount} ${likesCount===1 ? 'Like' : 'Likes'}</span><span style="opacity:0.4">•</span><span>Student Comments (${postComments.length})</span></div>`;
+        
+        // Test: Log image data
+        console.log('Post', post.id, 'has image:', !!post.image, 'has images:', Array.isArray(post.images));
 
         return `
-        <div class=\"post-card\">\n            <div class=\"post-header\">\n                <div class=\"post-author-avatar\">\n                    <i class=\"fas fa-user-shield\"></i>\n                </div>\n                <div class=\"post-author-info\">\n                    <h4>${post.author}</h4>\n                    <p>${formatDate(post.timestamp)}</p>\n                </div>\n                <span class=\"post-audience-badge ${post.audience}\">\n                    ${post.audience === 'students' ? 'GranTES Students' : 'Home Page'}\n                </span>\n            </div>\n            <div class=\"post-content\">\n                ${Array.isArray(post.images) && post.images.length > 1 ? renderCarousel(post.images) : (post.image ? `<div class=\\\"post-image\\\"><img src=\\\"${post.image}\\\" alt=\\\"post image\\\"></div>` : '')}\n                <div class=\"post-text\">${post.content}</div>\n                ${post.type === 'media' ? '<div class=\"post-media\"><i class=\"fas fa-image\"></i> Media attached</div>' : ''}\n                ${post.type === 'live' ? '<div class=\"post-live\"><i class=\"fas fa-video\"></i> Live video</div>' : ''}\n                ${post.type === 'feeling' ? '<div class=\"post-feeling\"><i class=\"fas fa-smile\"></i> Feeling/Activity</div>' : ''}\n            </div>\n            <div class=\"post-actions-bar\">\n                <button class=\"post-action-bar-btn\" onclick=\"adminDeletePost(${post.id})\">\n                    <i class=\"fas fa-trash\"></i>\n                    <span>Delete</span>\n                </button>\n            </div>
+        <div class=\"post-card\">\n            <div class=\"post-header\">\n                <div class=\"post-author-avatar\">\n                    <i class=\"fas fa-user-shield\"></i>\n                </div>\n                <div class=\"post-author-info\">\n                    <h4>${post.author}</h4>\n                    <p>${formatDate(post.timestamp)}</p>\n                </div>\n                <span class=\"post-audience-badge ${post.audience}\">\n                    ${post.audience === 'students' ? 'GranTES Students' : 'Home Page'}\n                </span>\n            </div>\n            <div class=\"post-content\">\n                ${Array.isArray(post.images) && post.images.length > 1 ? renderCarousel(post.images) : (post.image ? `<div class="post-image"><img src="${post.image}" alt="post image"></div>` : '')}\n                <div class=\"post-text\">${post.content}</div>\n                ${post.type === 'media' ? '<div class=\"post-media\"><i class=\"fas fa-image\"></i> Media attached</div>' : ''}\n                ${post.type === 'live' ? '<div class=\"post-live\"><i class=\"fas fa-video\"></i> Live video</div>' : ''}\n                ${post.type === 'feeling' ? '<div class=\"post-feeling\"><i class=\"fas fa-smile\"></i> Feeling/Activity</div>' : ''}\n            </div>\n            <div class=\"post-actions-bar\">\n                <button class=\"post-action-bar-btn\" onclick=\"adminDeletePost(${post.id})\">\n                    <i class=\"fas fa-trash\"></i>\n                    <span>Delete</span>\n                </button>\n            </div>
             ${post.audience === 'students' ? `
-            <div class=\"admin-comments-section\" style=\"margin-top:10px; background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; overflow:hidden;\">\n                ${commentsHeader}\n                <div>${commentsHtml}</div>\n            </div>
+            <div class=\"admin-comments-section\" style=\"margin-top:10px; background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; overflow:hidden;\">
+                <div style="padding:8px 10px; font-weight:600; color:#111827; background:#f3f4f6; display:flex; align-items:center; gap:10px; border-bottom:1px solid #e5e7eb;">
+                    <span><i class="fas fa-heart" style="color:#ef4444;"></i> ${likesCount} ${likesCount===1 ? 'Like' : 'Likes'}</span>
+                    <span style="opacity:0.4">•</span>
+                    <button onclick=\"toggleAdminComments(${post.id})\" style=\"background:none; border:none; color:#3b82f6; cursor:pointer; display:flex; align-items:center; gap:6px; font-weight:600;\">
+                        <i class="fas fa-comments"></i>
+                        <span>View Comments (${postComments.length})</span>
+                    </button>
+                </div>
+                <div id=\"admin-comments-${post.id}\" style=\"display:none;\">
+                    ${postComments.length > 0 ? postComments.map(c => `
+                        <div class=\"admin-comment-row\" style=\"padding:8px 12px; border-bottom:1px solid #e5e7eb; background:#ffffff;\">
+                            <strong>${c.author || 'Student'}</strong>: ${c.text || ''}
+                            <span style=\"color:#9ca3af; font-size:12px; margin-left:6px;\">${c.timestamp ? formatDate(c.timestamp) : ''}</span>
+                        </div>
+                    `).join('') : '<div style=\"color:#9ca3af; font-style:italic; padding:12px; text-align:center;\">No comments yet</div>'}
+                </div>
+            </div>
             ` : ''}
         </div>
         `;
@@ -2087,6 +2496,17 @@ function adminDeletePost(postId) {
     loadAdminPosts();
     try { loadHomeFeed(); } catch (_) { /* ignore */ }
     showToast('Post deleted', 'success');
+}
+
+function toggleAdminComments(postId) {
+    const commentsDiv = document.getElementById(`admin-comments-${postId}`);
+    if (!commentsDiv) return;
+    
+    if (commentsDiv.style.display === 'none') {
+        commentsDiv.style.display = 'block';
+    } else {
+        commentsDiv.style.display = 'none';
+    }
 }
 
 // Handle post input keypress
@@ -2274,13 +2694,15 @@ function handleStudentRegistration(event) {
     const password = document.getElementById('adminPassword').value;
     const confirmPassword = document.getElementById('adminConfirmPassword').value;
     const course = (document.getElementById('adminCourse').value || '').trim();
+    const place = (document.getElementById('adminPlace') && document.getElementById('adminPlace').value || '').trim();
+    const department = (document.getElementById('adminDepartment') && document.getElementById('adminDepartment').value || '').trim();
     const year = (document.getElementById('adminYear').value || '').trim();
     const photoFile = document.getElementById('adminPhoto') ? document.getElementById('adminPhoto').files[0] : null;
     const isIndigenous = document.getElementById('adminIsIndigenous') ? document.getElementById('adminIsIndigenous').checked : false;
     const isPwd = document.getElementById('adminIsPwd') ? document.getElementById('adminIsPwd').checked : false;
     
     // Basic required validation
-    if (!firstName || !lastName || !studentId || !email || !awardNumber || !course || !year) {
+    if (!firstName || !lastName || !studentId || !email || !awardNumber || !department || !place || !course || !year) {
         showToast('Please complete all required fields', 'error');
         return;
     }
@@ -2322,6 +2744,8 @@ function handleStudentRegistration(event) {
             email: email,
             awardNumber: awardNumber,
             password: password,
+            department: department,
+            place: place,
             course: course,
             year: year,
             status: 'active',
@@ -2415,6 +2839,8 @@ function showAdminTab(tabName) {
             loadApplications();
             break;
         case 'students':
+            // When navigating via Students tab, always default to Active
+            studentsViewFilter = 'active';
             loadStudents();
             break;
         case 'reports':
@@ -2488,11 +2914,12 @@ function loadStudents() {
         return;
     }
     container.innerHTML = filteredStudents.map((student, index) => {
-        const safeStatus = (student.status || 'active').toLowerCase();
+        const isArchived = (student.status || 'active') === 'archived';
         return `
             <div class="student-item">
                 <div class="student-header">
                     <h4><span class="student-index">${index + 1}</span>${student.firstName || ''} ${student.lastName || ''}</h4>
+                    ${isArchived ? '<span class="status-badge status-archived">ARCHIVED</span>' : ''}
                 </div>
                 <div class="student-info">
                     <div class="info-item">
@@ -2502,8 +2929,7 @@ function loadStudents() {
                 </div>
                 <div class="student-actions">
                     <button class="btn btn-secondary" onclick="openStudentProfileModal(${student.id})">View Profile</button>
-                    <button class="btn btn-secondary" onclick="editStudent(${student.id})">Edit</button>
-                    <button class="btn btn-secondary" onclick="archiveStudent(${student.id})">Archive</button>
+                    ${isArchived ? `<button class="btn btn-success" onclick="activateStudent(${student.id})">Activate</button>` : `<button class="btn btn-secondary" onclick="editStudent(${student.id})">Edit</button><button class="btn btn-secondary" onclick="archiveStudent(${student.id})">Archive</button>`}
                     <button class="btn btn-danger" onclick="deleteStudent(${student.id})">Delete</button>
                 </div>
             </div>
@@ -2513,14 +2939,235 @@ function loadStudents() {
 
 // Load Reports Tab
 function loadReports() {
-    // This would load charts and reports
-    showToast('Reports loaded successfully!', 'success');
+    const departmentChart = document.getElementById('departmentChart');
+    const departmentSummary = document.getElementById('departmentSummary');
+    const placeChart = document.getElementById('placeChart');
+    const placeSummary = document.getElementById('placeSummary');
+
+    // Department analysis (ACTIVE students only)
+    if (departmentChart && departmentSummary) {
+        const studentsArr = JSON.parse(localStorage.getItem('students') || '[]');
+        const active = studentsArr.filter(s => (s.status || 'active') === 'active');
+        const deptCounts = active.reduce((acc, s) => {
+            const d = (s && s.department) ? s.department : 'Unspecified';
+            acc[d] = (acc[d] || 0) + 1;
+            return acc;
+        }, {});
+        if (Object.keys(deptCounts).length === 0) {
+            departmentSummary.innerHTML = '<p class="no-data">No department data available.</p>';
+            const ctx = departmentChart.getContext('2d');
+            ctx.clearRect(0, 0, departmentChart.width, departmentChart.height);
+        } else {
+            drawSimpleChart(departmentChart, deptCounts, { hideLabels: false, labelFormatter: abbreviateDepartment });
+            const total = Object.values(deptCounts).reduce((a, b) => a + b, 0);
+            const sorted = Object.entries(deptCounts).sort((a, b) => b[1] - a[1]);
+            departmentSummary.innerHTML = `
+                <ul class="dept-summary-list">
+                    ${sorted.map(([name, count], idx) => {
+                        const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                        const color = `hsl(${(idx * 53) % 360}, 70%, 55%)`;
+                        const abbr = abbreviateDepartment(name);
+                        return `<li title="${name}">
+                            <span class="dept-color-dot" style="background:${color}"></span>
+                            <span class="dept-name">${abbr}</span>
+                            <span class="dept-count">${count} (${pct}%)</span>
+                        </li>`;
+                    }).join('')}
+                </ul>
+            `;
+        }
+    }
+
+    // From (place) analysis (ACTIVE students only)
+    if (placeChart && placeSummary) {
+        const studentsArr = JSON.parse(localStorage.getItem('students') || '[]');
+        const active = studentsArr.filter(s => (s.status || 'active') === 'active');
+        const placeCounts = active.reduce((acc, s) => {
+            const p = (s && s.place && s.place.trim()) ? s.place.trim() : 'Unspecified';
+            acc[p] = (acc[p] || 0) + 1;
+            return acc;
+        }, {});
+        if (Object.keys(placeCounts).length === 0) {
+            placeSummary.innerHTML = '<p class="no-data">No origin data available.</p>';
+            const ctx = placeChart.getContext('2d');
+            ctx.clearRect(0, 0, placeChart.width, placeChart.height);
+        } else {
+            // Hide labels under bars; values only on top
+            drawSimpleChart(placeChart, placeCounts, { hideLabels: true });
+            const total = Object.values(placeCounts).reduce((a, b) => a + b, 0);
+            const sorted = Object.entries(placeCounts).sort((a, b) => b[1] - a[1]).slice(0, 12);
+            placeSummary.innerHTML = `
+                <ul class="dept-summary-list">
+                    ${sorted.map(([name, count], idx) => {
+                        const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                        const color = `hsl(${(idx * 53) % 360}, 70%, 55%)`;
+                        return `<li title="${name}">
+                            <span class="dept-color-dot" style="background:${color}"></span>
+                            <span class="dept-name">${(name || 'Unspecified').toLowerCase()}</span>
+                            <span class="dept-count">${count} (${pct}%)</span>
+                        </li>`;
+                    }).join('')}
+                </ul>
+            `;
+        }
+    }
 }
 
 // Load Settings Tab
 function loadSettings() {
-    // This would load system settings
-    showToast('Settings loaded successfully!', 'success');
+	// Prefill admin credentials into the Settings tab
+	const adminEmailEl = document.getElementById('adminEmailSetting');
+	const adminPasswordEl = document.getElementById('adminPasswordSetting');
+	const adminPasswordConfirmEl = document.getElementById('adminPasswordConfirmSetting');
+	const adminLookup = document.getElementById('adminStudentLookup');
+	const resultsBox = document.getElementById('adminStudentSearchResults');
+	const selectedIdEl = document.getElementById('adminSelectedStudentId');
+	const awardEl = document.getElementById('adminStudentNewAward');
+	const passEl = document.getElementById('adminStudentNewPassword');
+	const pass2El = document.getElementById('adminStudentNewPasswordConfirm');
+	const updateBtn = document.getElementById('adminUpdateStudentBtn');
+
+	try {
+		const creds = getAdminCredentials();
+		if (adminEmailEl) adminEmailEl.value = creds.email || '';
+		if (adminPasswordEl) adminPasswordEl.value = '';
+		if (adminPasswordConfirmEl) adminPasswordConfirmEl.value = '';
+	} catch (_) {}
+
+	// Wire up live search for student lookup
+	if (adminLookup && resultsBox) {
+		adminLookup.oninput = function() {
+			const q = (adminLookup.value || '').trim().toLowerCase();
+			// Reset selection and disable fields until a student is selected
+			if (selectedIdEl) selectedIdEl.value = '';
+			if (awardEl) { awardEl.value = ''; awardEl.disabled = true; }
+			if (passEl) { passEl.value = ''; passEl.disabled = true; }
+			if (pass2El) { pass2El.value = ''; pass2El.disabled = true; }
+			if (updateBtn) updateBtn.disabled = true;
+
+			if (!q) {
+				resultsBox.style.display = 'none';
+				resultsBox.innerHTML = '';
+				return;
+			}
+			const students = JSON.parse(localStorage.getItem('students') || '[]');
+			const matches = students.filter(s => {
+				if (!s) return false;
+				const name = `${s.firstName || ''} ${s.lastName || ''}`.toLowerCase();
+				const email = (s.email || '').toLowerCase();
+				const award = (s.awardNumber || '').toLowerCase();
+				const sid = (s.studentId || '').toLowerCase();
+				return name.includes(q) || email.includes(q) || award.includes(q) || sid.includes(q);
+			}).slice(0, 10);
+			if (matches.length === 0) {
+				resultsBox.style.display = 'none';
+				resultsBox.innerHTML = '';
+				return;
+			}
+			resultsBox.innerHTML = matches.map(s => `
+				<div class="result-item" data-id="${s.id}">
+					<div class="result-name">${(s.firstName || '')} ${(s.lastName || '')}</div>
+					<div class="result-meta">${s.studentId || ''} • ${s.awardNumber || ''} • ${s.email || ''}</div>
+				</div>
+			`).join('');
+			resultsBox.style.display = 'block';
+			// Click handler for results
+			Array.from(resultsBox.querySelectorAll('.result-item')).forEach(item => {
+				item.onclick = function() {
+					const id = parseInt(this.getAttribute('data-id'));
+					try {
+						const list = JSON.parse(localStorage.getItem('students') || '[]');
+						const found = list.find(s => s && s.id === id);
+						if (found) {
+							if (selectedIdEl) selectedIdEl.value = String(found.id);
+							if (awardEl) { awardEl.disabled = false; awardEl.value = found.awardNumber || ''; }
+							if (passEl) { passEl.disabled = false; passEl.value = ''; }
+							if (pass2El) { pass2El.disabled = false; pass2El.value = ''; }
+							const showPwCtl = document.getElementById('adminShowPasswords');
+							if (showPwCtl) { showPwCtl.disabled = false; showPwCtl.checked = false; }
+							if (updateBtn) updateBtn.disabled = false;
+						}
+					} catch (_) {}
+					adminLookup.value = this.querySelector('.result-meta').textContent;
+					resultsBox.style.display = 'none';
+					resultsBox.innerHTML = '';
+				};
+			});
+		};
+	}
+
+	// Outside-click to close search results
+	document.addEventListener('click', function(e) {
+		if (!resultsBox) return;
+		const within = e.target === resultsBox || (adminLookup && e.target === adminLookup) || (resultsBox.contains && resultsBox.contains(e.target));
+		if (!within) {
+			resultsBox.style.display = 'none';
+		}
+	});
+
+	// Show/Hide password toggle
+	const showPw = document.getElementById('adminShowPasswords');
+	if (showPw) {
+		// Ensure default disabled state until a student is selected
+		showPw.disabled = !passEl || passEl.disabled;
+		showPw.onchange = function() {
+			const type = this.checked ? 'text' : 'password';
+			if (passEl) passEl.type = type;
+			if (pass2El) pass2El.type = type;
+		};
+	}
+
+	// Live award uniqueness validation
+	if (awardEl) {
+		awardEl.oninput = function() {
+			const hint = document.getElementById('adminAwardValidation');
+			if (!hint) return;
+			const value = (awardEl.value || '').trim().toLowerCase();
+			const selectedId = selectedIdEl && selectedIdEl.value ? parseInt(selectedIdEl.value) : null;
+			if (!value || !selectedId) { 
+				hint.textContent = ''; 
+				hint.className = 'input-hint'; 
+				if (updateBtn) updateBtn.disabled = false; 
+				return; 
+			}
+			try {
+				const list = JSON.parse(localStorage.getItem('students') || '[]');
+				const taken = list.some(s => s && s.id !== selectedId && s.awardNumber && String(s.awardNumber).toLowerCase() === value);
+				if (taken) {
+					hint.textContent = 'This award number is already in use.';
+					hint.className = 'input-hint error';
+					if (updateBtn) updateBtn.disabled = true;
+				} else {
+					hint.textContent = 'Award number is available.';
+					hint.className = 'input-hint success';
+					if (updateBtn) updateBtn.disabled = false;
+				}
+			} catch (_) { /* ignore */ }
+		};
+	}
+
+	// Enable update when passwords valid and matching
+	function validatePasswordInputs() {
+		if (!passEl || !pass2El || !updateBtn) return;
+		const p1 = (passEl.value || '').trim();
+		const p2 = (pass2El.value || '').trim();
+		const hint = document.getElementById('adminPasswordValidation');
+		if (!p1 && !p2) { if (hint) { hint.textContent = ''; hint.className = 'input-hint'; } return; }
+		if (p1.length < 6) {
+			if (hint) { hint.textContent = 'Password must be at least 6 characters.'; hint.className = 'input-hint error'; }
+			updateBtn.disabled = true;
+			return;
+		}
+		if (p1 !== p2) {
+			if (hint) { hint.textContent = 'Passwords do not match.'; hint.className = 'input-hint error'; }
+			updateBtn.disabled = true;
+			return;
+		}
+		if (hint) { hint.textContent = 'Password looks good.'; hint.className = 'input-hint success'; }
+		updateBtn.disabled = false;
+	}
+	if (passEl) passEl.oninput = validatePasswordInputs;
+	if (pass2El) pass2El.oninput = validatePasswordInputs;
 }
 
 // Student Management Functions
@@ -2559,7 +3206,127 @@ function closeStudentProfileModal() {
 }
 
 function editStudent(studentId) {
-    showToast('Edit student functionality coming soon!', 'info');
+    const student = students.find(s => s.id === studentId);
+    if (!student) {
+        showToast('Student not found!', 'error');
+        return;
+    }
+    
+    // Populate the edit form with current student data
+    document.getElementById('editStudentId').value = student.id;
+    document.getElementById('editFirstName').value = student.firstName || '';
+    document.getElementById('editLastName').value = student.lastName || '';
+    document.getElementById('editStudentIdInput').value = student.studentId || '';
+    document.getElementById('editEmail').value = student.email || '';
+    // Award number and password removed from Edit modal
+    document.getElementById('editDepartment').value = student.department || '';
+    document.getElementById('editPlace').value = student.place || '';
+    document.getElementById('editCourse').value = student.course || '';
+    document.getElementById('editYear').value = student.year || '';
+    document.getElementById('editIsIndigenous').checked = student.isIndigenous || false;
+    document.getElementById('editIsPwd').checked = student.isPwd || false;
+    
+    // Show current photo if available
+    const currentPhotoPreview = document.getElementById('currentPhotoPreview');
+    if (student.idPictureDataUrl) {
+        currentPhotoPreview.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <img src="${student.idPictureDataUrl}" alt="Current ID Picture" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 2px solid #e2e8f0;">
+                <span style="font-size: 0.9rem; color: #64748b;">Current ID Picture</span>
+            </div>
+        `;
+    } else {
+        currentPhotoPreview.innerHTML = '<span style="font-size: 0.9rem; color: #64748b;">No current ID picture</span>';
+    }
+    
+    // Show the modal
+    document.getElementById('editStudentModal').style.display = 'block';
+}
+
+function closeEditStudentModal() {
+    document.getElementById('editStudentModal').style.display = 'none';
+    // Clear the form
+    document.getElementById('editStudentForm').reset();
+    document.getElementById('currentPhotoPreview').innerHTML = '';
+}
+
+function handleEditStudent(event) {
+    event.preventDefault();
+    
+    const studentId = parseInt(document.getElementById('editStudentId').value);
+    const firstName = document.getElementById('editFirstName').value.trim();
+    const lastName = document.getElementById('editLastName').value.trim();
+    const studentIdInput = document.getElementById('editStudentIdInput').value.trim();
+    const email = document.getElementById('editEmail').value.trim();
+    const awardNumber = undefined; // removed from form
+    const password = undefined; // removed from form
+    const confirmPassword = undefined; // removed from form
+    const department = document.getElementById('editDepartment').value;
+    const place = document.getElementById('editPlace').value.trim();
+    const course = document.getElementById('editCourse').value.trim();
+    const year = document.getElementById('editYear').value;
+    const photoFile = document.getElementById('editPhoto').files[0];
+    const isIndigenous = document.getElementById('editIsIndigenous').checked;
+    const isPwd = document.getElementById('editIsPwd').checked;
+    
+    // Validation
+    if (!firstName || !lastName || !studentIdInput || !email || !department || !place || !course || !year) {
+        showToast('Please fill in all required fields', 'error');
+        return;
+    }
+    
+    // Check for duplicate email or award number (excluding current student)
+    const existingStudent = students.find(s => s.id !== studentId && (s.email === email));
+    if (existingStudent) {
+        showToast('Email or Award Number already exists for another student', 'error');
+        return;
+    }
+    
+    // Find the student to update
+    const studentIndex = students.findIndex(s => s.id === studentId);
+    if (studentIndex === -1) {
+        showToast('Student not found', 'error');
+        return;
+    }
+    
+    // Helper to finalize update after optional image processing
+    const finalizeUpdate = (idPictureDataUrl) => {
+        // Update student data
+        students[studentIndex] = {
+            ...students[studentIndex],
+            firstName: firstName,
+            lastName: lastName,
+            studentId: studentIdInput,
+            email: email,
+            // awardNumber and password unchanged
+            department: department,
+            place: place,
+            course: course,
+            year: year,
+            isIndigenous: isIndigenous,
+            isPwd: isPwd,
+            idPictureDataUrl: idPictureDataUrl !== undefined ? idPictureDataUrl : students[studentIndex].idPictureDataUrl
+        };
+        
+        // Save to localStorage
+        localStorage.setItem('students', JSON.stringify(students));
+        
+        // Close modal and refresh
+        closeEditStudentModal();
+        loadStudents();
+        showToast('Student updated successfully!', 'success');
+    };
+    
+    if (photoFile) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            finalizeUpdate(e.target.result);
+        };
+        reader.readAsDataURL(photoFile);
+    } else {
+        // Keep existing photo if no new one uploaded
+        finalizeUpdate(undefined);
+    }
 }
 
 function archiveStudent(studentId) {
@@ -2569,6 +3336,8 @@ function archiveStudent(studentId) {
             student.status = 'archived';
             localStorage.setItem('students', JSON.stringify(students));
             loadStudents();
+            loadAdminDashboard();
+            try { loadReports(); } catch (_) {}
             showToast('Student archived successfully!', 'success');
         }
     }
